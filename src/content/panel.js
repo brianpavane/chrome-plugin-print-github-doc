@@ -49,7 +49,7 @@ GHP.panel = (() => {
     [hidden] { display: none !important; }
   `;
 
-  function open({ options, hasDocument, folderPromise, info, dark }) {
+  function open({ options, hasDocument, folderPromise, info, dark, onCancel = () => {} }) {
     // Drop a panel left open from an earlier run (e.g. one showing an error).
     document.querySelectorAll(".ghp-panel-host").forEach((el) => el.remove());
     const host = document.createElement("div");
@@ -59,9 +59,9 @@ GHP.panel = (() => {
 
     shadow.innerHTML = `
       <style>${STYLE}</style>
-      <div class="panel" role="dialog" aria-label="Print Doc for GitHub">
+      <div class="panel" role="dialog" aria-modal="true" aria-labelledby="ghp-panel-title" aria-describedby="ghp-panel-status">
         <div class="head">
-          <h2>Print Doc for GitHub</h2>
+          <h2 id="ghp-panel-title">Print Doc for GitHub</h2>
           <button class="close" type="button" aria-label="Close">×</button>
         </div>
         <p class="notice" data-ref="notice" hidden>
@@ -80,7 +80,7 @@ GHP.panel = (() => {
           <input type="checkbox" data-ref="remember" />
           <span>Remember these settings</span>
         </label>
-        <div class="status" data-ref="status" aria-live="polite"></div>
+        <div class="status" id="ghp-panel-status" data-ref="status" aria-live="polite"></div>
         <div class="actions">
           <button class="btn" type="button" data-ref="cancel">Cancel</button>
           <button class="btn primary" type="button" data-ref="print">Print</button>
@@ -113,6 +113,11 @@ GHP.panel = (() => {
 
     folderPromise.then((listing) => {
       $("folderLoading").hidden = true;
+      if (listing?.error) {
+        $("folderLoading").textContent = "Folder printing is temporarily unavailable because GitHub returned an unexpected response.";
+        $("folderLoading").hidden = false;
+        return;
+      }
       const n = listing?.files.length || 0;
       // On a file page, a folder holding only that file adds nothing.
       const max = GHP.github.MAX_FOLDER_FILES;
@@ -158,12 +163,26 @@ GHP.panel = (() => {
       if (e.key === "Escape") {
         e.preventDefault();
         settled ? close() : finish("cancel");
-      } else if (e.key === "Enter" && !settled) {
+      } else if (e.key === "Tab") {
+        const focusable = [...shadow.querySelectorAll("button:not(:disabled), input:not(:disabled)")].filter(
+          (el) => !el.closest("[hidden]")
+        );
+        const first = focusable[0];
+        const last = focusable.at(-1);
+        if (e.shiftKey && shadow.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && shadow.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      } else if (e.key === "Enter" && !settled && shadow.activeElement?.tagName === "BUTTON") {
         e.preventDefault();
-        finish("print");
+        shadow.activeElement.click();
       }
     });
 
+    const previousFocus = document.activeElement;
     document.body.append(host);
     $("print").focus();
 
@@ -171,7 +190,9 @@ GHP.panel = (() => {
     function close() {
       if (closed) return;
       closed = true;
+      onCancel();
       host.remove();
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     }
 
     return {
@@ -180,6 +201,30 @@ GHP.panel = (() => {
       status(text, { error = false } = {}) {
         $("status").textContent = text;
         $("status").classList.toggle("error", error);
+      },
+      recoverFolder(failures, loaded, fatalMessage = "") {
+        const names = failures.slice(0, 3).map(({ file }) => file.name).join(", ");
+        const more = failures.length > 3 ? ` and ${failures.length - 3} more` : "";
+        $("status").textContent = fatalMessage
+          ? `Couldn't load the folder: ${fatalMessage}`
+          : `${failures.length} document${failures.length === 1 ? "" : "s"} failed (${names}${more}).`;
+        $("status").classList.add("error");
+        $("print").disabled = loaded === 0;
+        if (loaded) $("print").textContent = `Print ${loaded} loaded`;
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "btn";
+        retry.textContent = "Retry failed";
+        $("print").before(retry);
+        return new Promise((resolve) => {
+          const finishRecovery = (answer) => {
+            retry.remove();
+            resolve(answer);
+          };
+          retry.addEventListener("click", () => finishRecovery("retry"), { once: true });
+          $("print").addEventListener("click", () => finishRecovery("partial"), { once: true });
+          $("cancel").addEventListener("click", () => finishRecovery("cancel"), { once: true });
+        });
       },
       close,
       get closed() {

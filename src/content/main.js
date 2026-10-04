@@ -13,12 +13,23 @@
   G.active = {};
 
   let panel = null;
+  const controller = new AbortController();
   try {
     const saved = await chrome.storage.sync
       .get(globalThis.GHP_DEFAULTS)
       .catch(() => ({ ...globalThis.GHP_DEFAULTS }));
     const info = G.github.pageInfo();
     const root = G.github.findContent();
+    chrome.storage.local
+      .set({
+        ghpLastDiagnostic: {
+          at: new Date().toISOString(),
+          pageType: info.kind,
+          documentFound: !!root,
+          url: info.url,
+        },
+      })
+      .catch(() => {});
     const html = document.documentElement;
     const dark =
       html.getAttribute("data-color-mode") === "dark" ||
@@ -29,11 +40,19 @@
     let folderPromise = Promise.resolve(null);
 
     if (saved.showPanel) {
-      folderPromise = G.github.listMarkdown(info).catch((err) => {
+      folderPromise = G.github.listMarkdown(info, { signal: controller.signal }).catch((err) => {
+        if (controller.signal.aborted) return null;
         console.warn("Print Doc for GitHub: couldn't list folder", err);
-        return null;
+        return { files: [], error: err };
       });
-      panel = G.panel.open({ options: saved, hasDocument: !!root, folderPromise, info, dark });
+      panel = G.panel.open({
+        options: saved,
+        hasDocument: !!root,
+        folderPromise,
+        info,
+        dark,
+        onCancel: () => controller.abort(new DOMException("Cancelled", "AbortError")),
+      });
       G.active.submit = panel.submit;
       choice = await panel.choice;
     } else if (root) {
@@ -54,14 +73,27 @@
     let listing = null;
     if (choice.folder) {
       listing = await folderPromise;
-      try {
-        bundle = await G.bundle.build(info, listing, (done, total) =>
-          panel?.status(`Loading documents… ${done} of ${total}`)
-        );
-      } catch (err) {
-        console.error("Print Doc for GitHub:", err);
-        panel?.status(`Couldn't load the folder: ${err.message}`, { error: true });
-        return; // leave the panel open so the message can be read
+      while (!controller.signal.aborted) {
+        try {
+          bundle = await G.bundle.build(
+            info,
+            listing,
+            (done, total) => panel?.status(`Loading documents… ${done} of ${total}`),
+            { signal: controller.signal }
+          );
+        } catch (err) {
+          if (controller.signal.aborted) return;
+          console.error("Print Doc for GitHub:", err);
+          const recovery = await panel.recoverFolder([], 0, err.message);
+          if (recovery === "retry") continue;
+          return;
+        }
+        const failures = bundle.ghpFailures || [];
+        if (!failures.length) break;
+        const recovery = await panel.recoverFolder(failures, listing.files.length - failures.length);
+        if (recovery === "retry") continue;
+        if (recovery === "cancel") return;
+        break;
       }
       if (panel?.closed) return; // cancelled while loading
     }
@@ -82,6 +114,7 @@
       session.restore();
     }
   } catch (err) {
+    if (controller.signal.aborted) return;
     console.error("Print Doc for GitHub:", err);
     alert(`Print Doc for GitHub: something went wrong.\n\n${err.message}`);
   } finally {

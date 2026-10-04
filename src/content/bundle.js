@@ -7,7 +7,8 @@ GHP.bundle = (() => {
 
   // -> detached <div class="ghp-bundle"> with a contents list and one
   // <section class="ghp-doc"> per file, in listing order.
-  async function build(info, listing, onProgress = () => {}) {
+  async function build(info, listing, onProgress = () => {}, { signal } = {}) {
+    if (!listing?.files) throw new Error("The folder listing is no longer available.");
     const { files } = listing;
     if (files.length > GHP.github.MAX_FOLDER_FILES) {
       throw new Error(`Too many files (${files.length}); the limit is ${GHP.github.MAX_FOLDER_FILES}.`);
@@ -25,21 +26,37 @@ GHP.bundle = (() => {
     bundle.append(contents);
 
     let done = 0;
-    let failed = false; // stop reporting progress (and fetching) after an error
     onProgress(done, files.length);
     const htmls = await mapLimit(files, CONCURRENCY, async (file) => {
-      if (failed) return null;
+      if (signal?.aborted) throw signal.reason || new DOMException("Cancelled", "AbortError");
       try {
-        const html = await GHP.github.fetchRendered(file);
-        if (!failed) onProgress(++done, files.length);
+        const html = await GHP.github.fetchRendered(file, { signal });
+        onProgress(++done, files.length);
         return html;
       } catch (err) {
-        failed = true;
-        throw err;
+        if (signal?.aborted) throw err;
+        onProgress(++done, files.length);
+        return { error: err };
       }
     });
 
+    const failures = files.flatMap((file, i) =>
+      htmls[i] && typeof htmls[i] === "object" ? [{ file, error: htmls[i].error }] : []
+    );
+    if (failures.length === files.length) {
+      throw new Error(`None of the ${files.length} documents could be loaded.`);
+    }
+    const loadedCount = files.length - failures.length;
+    heading.textContent = `Contents (${loadedCount} document${loadedCount === 1 ? "" : "s"})`;
+    if (failures.length) {
+      const warning = document.createElement("p");
+      warning.className = "ghp-bundle-warning";
+      warning.textContent = `${failures.length} document${failures.length === 1 ? " was" : "s were"} omitted because GitHub could not load ${failures.length === 1 ? "it" : "them"}.`;
+      contents.append(warning);
+    }
+
     files.forEach((file, i) => {
+      if (htmls[i] && typeof htmls[i] === "object") return;
       const section = document.createElement("section");
       section.className = "ghp-doc";
 
@@ -57,6 +74,7 @@ GHP.bundle = (() => {
       list.append(item);
     });
 
+    Object.defineProperty(bundle, "ghpFailures", { value: failures });
     return bundle;
   }
 
@@ -85,7 +103,7 @@ GHP.bundle = (() => {
     for (const el of [root, ...root.querySelectorAll("*")]) {
       for (const { name, value } of [...el.attributes]) {
         const n = name.toLowerCase();
-        if (n.startsWith("on") || n === "srcdoc" || (n === "srcset" && /javascript:/i.test(value))) {
+        if (n.startsWith("on") || n === "srcdoc" || n === "style" || n === "srcset") {
           el.removeAttribute(name);
         } else if (URL_ATTRS.has(n) && !isSafeUrl(value, el, n)) {
           el.removeAttribute(name);
@@ -96,10 +114,17 @@ GHP.bundle = (() => {
   }
 
   function isSafeUrl(value, el, attr) {
-    const v = value.replace(/[\u0000-\u0020]/g, "").toLowerCase();
-    if (v.startsWith("javascript:") || v.startsWith("vbscript:")) return false;
-    if (v.startsWith("data:")) return el.localName === "img" && attr === "src" && v.startsWith("data:image/");
-    return true;
+    const compact = value.replace(/[\u0000-\u0020]/g, "");
+    if (/^(#|\/|\.\/|\.\.\/)/.test(compact)) return true;
+    let url;
+    try {
+      url = new URL(compact, location.href);
+    } catch {
+      return false;
+    }
+    if (url.protocol === "https:" || url.protocol === "http:") return true;
+    if (url.protocol === "mailto:" && (attr === "href" || attr === "xlink:href")) return true;
+    return url.protocol === "data:" && el.localName === "img" && attr === "src" && /^data:image\/(?:png|gif|jpe?g|webp|avif);/i.test(compact);
   }
 
   async function mapLimit(items, limit, fn) {

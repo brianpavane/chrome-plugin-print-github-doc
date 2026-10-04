@@ -14,6 +14,7 @@ GHP.prepare = async function prepare({
 }) {
   const S = globalThis.GHP_SELECTORS;
   const html = document.documentElement;
+  const initialUrl = location.href;
   const undo = [];
   const restore = () => {
     while (undo.length) {
@@ -45,6 +46,9 @@ GHP.prepare = async function prepare({
       target = bundle;
     }
 
+    if (!(target instanceof Element) || !target.isConnected) {
+      throw new Error("The GitHub document is no longer available. Try again after the page finishes loading.");
+    }
     markPrintTree(target);
     if (options.includeHeader) insertHeader(target);
     if (options.expandDetails) expandDetails(target);
@@ -56,8 +60,10 @@ GHP.prepare = async function prepare({
     setClass(html, "ghp-printing");
 
     await loadImages(target);
+    assertPageUnchanged(target);
     if (bundle) await settleDiagrams(bundle);
     await delay(300); // let the theme change and diagram re-renders settle
+    assertPageUnchanged(target);
     if (wasDark) invertDarkDiagrams(target);
     await nextFrame();
   } catch (err) {
@@ -106,8 +112,21 @@ GHP.prepare = async function prepare({
     const pending = [...scope.querySelectorAll(S.diagramPlaceholders.join(","))];
     if (!pending.length) return;
     const hasFrame = (el) => el.querySelector("iframe");
-    const deadline = Date.now() + 4000;
-    while (Date.now() < deadline && !pending.every(hasFrame)) await delay(250);
+    if (!pending.every(hasFrame)) {
+      await new Promise((resolve) => {
+        const observer = new MutationObserver(() => {
+          if (pending.every(hasFrame)) {
+            observer.disconnect();
+            resolve();
+          }
+        });
+        observer.observe(scope, { childList: true, subtree: true });
+        setTimeout(() => {
+          observer.disconnect();
+          resolve();
+        }, 4000);
+      });
+    }
     for (const el of pending) {
       if (!hasFrame(el)) setClass(el, "ghp-show-source");
     }
@@ -148,7 +167,7 @@ GHP.prepare = async function prepare({
     } else {
       title.textContent = GHP.github.docTitle(info, el);
       addMeta(header, "Repository", info.repoPath);
-      if (info.file) addMeta(header, "File", info.file);
+      if (info.file) addMeta(header, info.fileIsApproximate ? "Path from URL" : "File", info.file);
       addMeta(header, "URL", info.url);
     }
 
@@ -209,6 +228,12 @@ GHP.prepare = async function prepare({
       Promise.all(imgs.map((img) => img.decode().catch(() => {}))),
       delay(5000),
     ]);
+  }
+
+  function assertPageUnchanged(target) {
+    if (location.href !== initialUrl || !target.isConnected) {
+      throw new Error("The GitHub page changed while the document was being prepared. Please try again.");
+    }
   }
 
   // ---- reversible DOM helpers -------------------------------------------

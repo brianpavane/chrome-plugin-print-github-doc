@@ -163,6 +163,17 @@ npm install   # once
 npm test
 ```
 
+By default Playwright uses installed Google Chrome. Set
+`PLAYWRIGHT_BROWSER=chromium` to use Playwright's bundled Chromium instead,
+or set `PLAYWRIGHT_CHANNEL` to another installed browser channel.
+
+The real-extension smoke test is opt-in because it launches an unpacked
+extension in a persistent browser context:
+
+```sh
+GHP_EXTENSION_TEST=1 npx playwright test test/extension.spec.js --workers=1
+```
+
 The tests (`test/print.spec.js`) open fake GitHub pages in headless Chrome,
 with every `github.com` request answered from `test/fixtures/`, so they run
 offline and don't depend on GitHub. They inject the same scripts, in the same
@@ -177,16 +188,18 @@ like in print media at that moment. They cover:
 - the panel: per-print settings, remembering settings, Escape to cancel,
   triggering again to print
 - folder printing: order (README first, natural sort), contents, headers,
-  diagram source fallback, and the error path
+  diagram source fallback, partial failures, retry, and the error path
+- GitHub JSON contract failures and request timeouts
 - the "no document" fallback, with and without the panel
 
 If `npm test` can't find Chrome, install Google Chrome, or run
 `npx playwright install chromium` and remove `channel: "chrome"` from
 `playwright.config.js`.
 
-What the tests can't cover: the real Chrome print dialog, the extension's
-service worker and permissions, and GitHub's live pages. That's what the
-manual checklist is for.
+The opt-in smoke test covers loading the unpacked manifest, service worker,
+permissions, command, and declarative-content rule. The tests still cannot
+automate Chrome's native toolbar interaction or print dialog, or guarantee
+compatibility with future GitHub live-page changes.
 
 ### Manual test checklist
 

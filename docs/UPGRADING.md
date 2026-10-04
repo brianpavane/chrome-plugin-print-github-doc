@@ -83,6 +83,18 @@ than reloading it. Removing it also clears its settings.
 The full list is in [`CHANGELOG.md`](../CHANGELOG.md). Notes that affect how
 the extension behaves after upgrading:
 
+### 0.4.1 → 0.5.0
+
+- **Folder printing is more resilient.** Slow requests time out, Cancel stops
+  outstanding requests, and failed documents can be retried or omitted from
+  an otherwise successful folder print.
+- **Options shows the installed version and last-run diagnostics.** This can
+  help distinguish a GitHub markup change from a page with no document.
+- **Ambiguous branch paths are labeled “Path from URL.”** GitHub URLs do not
+  reliably distinguish branch names containing slashes from file paths.
+- The options panel has improved keyboard and screen-reader behavior. Existing
+  settings and shortcuts are preserved.
+
 ### 0.3.0 → next version
 
 - **New name: Print Doc for GitHub.** The card on `chrome://extensions`, the

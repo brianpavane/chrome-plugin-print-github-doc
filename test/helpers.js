@@ -41,6 +41,10 @@ export async function openPage(page, { url = DOC_URL, fixture = "doc.html", stor
           window.__saved = values;
         },
       },
+      local: {
+        get: async () => ({}),
+        set: async () => {},
+      },
     };
     // Record the print-time state instead of opening a dialog.
     window.__prints = [];
@@ -77,7 +81,7 @@ export async function openPage(page, { url = DOC_URL, fixture = "doc.html", stor
         bundleContents: [...document.querySelectorAll(".ghp-contents li")].map((e) => e.textContent),
         mermaidSourceShown: shown(".ghp-show-source .render-plaintext-hidden"),
         unsafeInBundle: document.querySelectorAll(
-          ".ghp-bundle script, .ghp-bundle iframe, .ghp-bundle [onerror], .ghp-bundle [onclick], .ghp-bundle a[href^='javascript:']"
+          ".ghp-bundle script, .ghp-bundle iframe, .ghp-bundle [onerror], .ghp-bundle [onclick], .ghp-bundle [style], .ghp-bundle [srcset], .ghp-bundle a[href^='javascript:'], .ghp-bundle a[href^='file:']"
         ).length,
         bundleImages: document.querySelectorAll(".ghp-bundle img[src]").length,
       };

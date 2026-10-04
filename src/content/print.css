@@ -162,6 +162,13 @@
     color: #1f2328;
   }
 
+  html.ghp-printing .ghp-bundle-warning {
+    padding: 8px;
+    border: 1px solid #d4a72c;
+    color: #633c01;
+    background: #fff8c5;
+  }
+
   html.ghp-printing .ghp-doc {
     break-before: page;
   }

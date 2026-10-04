@@ -9,7 +9,7 @@ export default defineConfig({
   fullyParallel: true,
   reporter: "list",
   use: {
-    channel: "chrome",
+    ...(process.env.PLAYWRIGHT_BROWSER === "chromium" ? {} : { channel: process.env.PLAYWRIGHT_CHANNEL || "chrome" }),
     headless: true,
   },
 });

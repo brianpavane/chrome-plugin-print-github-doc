@@ -1,5 +1,12 @@
 const defaults = globalThis.GHP_DEFAULTS;
 const status = document.getElementById("status");
+document.getElementById("version").textContent = chrome.runtime.getManifest().version;
+chrome.storage.local.get("ghpLastDiagnostic").then(({ ghpLastDiagnostic: d }) => {
+  if (!d) return;
+  const when = new Date(d.at).toLocaleString();
+  document.getElementById("diagnostics").textContent =
+    `Last invocation: ${d.pageType} page; document ${d.documentFound ? "found" : "not found"}; ${when}.`;
+});
 
 chrome.storage.sync.get(defaults).then((opts) => {
   for (const [key, value] of Object.entries(opts)) {

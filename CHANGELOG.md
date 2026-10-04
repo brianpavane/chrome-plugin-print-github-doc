@@ -9,6 +9,29 @@ The version number lives in two places that must match:
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-04
+
+### Added
+
+- Folder request cancellation and timeouts, retry or partial-print recovery,
+  last-run diagnostics, GitHub JSON contract tests, and an opt-in unpacked
+  extension integration test.
+
+### Changed
+
+- Improved panel keyboard accessibility, diagram-settling responsiveness,
+  branch/path labeling, browser selection for tests, and folder error messages.
+
+### Security
+
+- Tightened fetched Markdown sanitizing with an explicit URL-scheme allowlist
+  and removal of inline styles and `srcset`.
+
+### Fixed
+
+- Printing now stops cleanly if the GitHub page navigates or replaces the
+  document while preparation is in progress.
+
 ## [0.4.1] - 2026-10-04
 
 ### Changed
@@ -117,7 +140,8 @@ The version number lives in two places that must match:
 - Button is enabled only on github.com.
 - Options page, icons, and full documentation.
 
-[Unreleased]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.2.0...v0.3.0

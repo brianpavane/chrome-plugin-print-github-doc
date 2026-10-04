@@ -66,7 +66,7 @@ things must be done before the first submission:
    want to receive user questions at (it can be the same as the developer
    account's contact email) before creating the gist.
 
-The version to upload first is the latest release tag (**0.4.1** at the
+The version to upload first is the latest release tag (**0.5.0** at the
 time of writing): the `VERSION` file always holds the current version.
 
 ## 1. Create the developer account (once)
@@ -148,7 +148,7 @@ npm run package
 The last line printed names the file, for example:
 
 ```text
-✓ dist/print-github-doc-0.4.1.zip (16 files, 20.1 KB)
+✓ dist/print-github-doc-0.5.0.zip (16 files, 22.3 KB)
 ```
 
 That file, in the `dist/` folder of the repository, is what you upload.

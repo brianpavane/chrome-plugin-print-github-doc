@@ -14,6 +14,7 @@ GHP.github = (() => {
   // Folder printing fetches one page per file; cap it so a huge folder
   // can't send hundreds of requests to GitHub.
   const MAX_FOLDER_FILES = 100;
+  const REQUEST_TIMEOUT_MS = 15000;
 
   function pageInfo(loc = location) {
     const parts = loc.pathname.split("/").filter(Boolean).map(safeDecode);
@@ -33,6 +34,7 @@ GHP.github = (() => {
       repoPath: `${owner}/${repo}`,
       kind,
       file,
+      fileIsApproximate: kind === "blob",
       url: loc.href,
       parts,
     };
@@ -95,10 +97,10 @@ GHP.github = (() => {
   }
 
   // -> { ref, dir, files: [{ name, path, url }] } or null.
-  async function listMarkdown(info) {
+  async function listMarkdown(info, { signal } = {}) {
     const url = folderUrl(info);
     if (!url) return null;
-    const json = await fetchJson(url);
+    const json = await fetchJson(url, { signal });
     const route = json?.payload?.codeViewTreeRoute || json?.payload?.codeViewRepoRoute;
     const items = route?.tree?.items;
     const ref = route?.refInfo?.name;
@@ -127,8 +129,8 @@ GHP.github = (() => {
   }
 
   // Rendered HTML (an <article class="markdown-body">) for one file.
-  async function fetchRendered(file) {
-    const json = await fetchJson(file.url);
+  async function fetchRendered(file, { signal } = {}) {
+    const json = await fetchJson(file.url, { signal });
     const html = json?.payload?.codeViewBlobRoute?.richText;
     if (typeof html !== "string" || !html.trim()) {
       throw new Error(`GitHub returned no rendered content for ${file.path}`);
@@ -137,13 +139,34 @@ GHP.github = (() => {
   }
 
   // Only ever requests github.com paths, from the github.com page itself.
-  async function fetchJson(url) {
+  async function fetchJson(url, { signal, timeout = REQUEST_TIMEOUT_MS } = {}) {
     const target = new URL(url, location.href);
     if (target.origin !== location.origin) throw new Error(`Refusing to fetch ${target.href}`);
-    const res = await fetch(target, {
-      headers: { Accept: "application/json" },
-      credentials: "same-origin",
-    });
+    const timeoutController = new AbortController();
+    const combinedController = new AbortController();
+    const forwardAbort = (source) => {
+      if (!combinedController.signal.aborted) combinedController.abort(source.reason);
+    };
+    const onExternalAbort = () => forwardAbort(signal);
+    signal?.addEventListener("abort", onExternalAbort, { once: true });
+    timeoutController.signal.addEventListener("abort", () => forwardAbort(timeoutController.signal), { once: true });
+    const timer = setTimeout(() => timeoutController.abort(new Error(`Request timed out after ${timeout} ms`)), timeout);
+    let res;
+    try {
+      res = await fetch(target, {
+        headers: { Accept: "application/json" },
+        credentials: "same-origin",
+        signal: combinedController.signal,
+      });
+    } catch (err) {
+      if (timeoutController.signal.aborted && !signal?.aborted) {
+        throw new Error(`GitHub took too long to respond for ${url}`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onExternalAbort);
+    }
     if (res.url && new URL(res.url).origin !== location.origin) {
       throw new Error(`Unexpected redirect to ${res.url}`);
     }
@@ -195,6 +218,7 @@ GHP.github = (() => {
     folderUrl,
     listMarkdown,
     fetchRendered,
+    fetchJson,
     compareFiles,
     baseName,
     MAX_FOLDER_FILES,

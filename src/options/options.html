@@ -41,6 +41,7 @@
     </style>
   </head>
   <body>
+    <p class="hint">Version <span id="version">…</span></p>
     <h2>Before printing</h2>
     <label>
       <input type="checkbox" id="showPanel" />
@@ -86,6 +87,8 @@
       Current shortcut: <kbd id="shortcut">…</kbd>
       <button type="button" id="changeShortcut">Change shortcut…</button>
     </p>
+    <h2>Diagnostics</h2>
+    <p class="hint" id="diagnostics">Open a GitHub page and invoke the extension to test document detection.</p>
     <p class="hint">
       Chrome only lets you set extension shortcuts on its own shortcuts page.
       The button opens it: find "Print Doc for GitHub", click the pencil, and press the keys you want.

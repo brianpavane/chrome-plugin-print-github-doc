@@ -25,7 +25,7 @@ test.describe("single document", () => {
     expect(snap.printHeaderShown).toBe(true);
     expect(snap.printHeader).toContain("Getting started");
     expect(snap.printHeader).toContain("Repository: test-owner/test-repo");
-    expect(snap.printHeader).toContain("File: docs/2-two.md");
+    expect(snap.printHeader).toContain("Path from URL: docs/2-two.md");
     expect(snap.printHeader).toContain("URL: https://github.com/test-owner/test-repo/blob/main/docs/2-two.md");
   });
 
@@ -179,7 +179,7 @@ test.describe("folder printing", () => {
     expect((await leftovers(page)).elements).toBe(0);
   });
 
-  test("shows an error and doesn't print if a file can't be loaded", async ({ page }) => {
+  test("offers to print the successfully loaded files if one file fails", async ({ page }) => {
     await openPage(page);
     await page.route("**/blob/main/docs/10-ten.md", (route) =>
       route.fulfill({ status: 500, body: "boom" })
@@ -187,10 +187,10 @@ test.describe("folder printing", () => {
     await trigger(page);
     await panel(page).getByText("Print all 3 Markdown files").click();
     await panel(page).getByRole("button", { name: "Print folder" }).click();
-    await expect(panel(page)).toContainText("Couldn't load the folder");
-    expect(await page.evaluate(() => window.__prints.length)).toBe(0);
-    await panel(page).getByRole("button", { name: "Cancel" }).click();
-    await expect(panel(page)).toHaveCount(0);
+    await expect(panel(page)).toContainText("1 document failed");
+    await panel(page).getByRole("button", { name: "Print 2 loaded" }).click();
+    const snap = await waitForPrint(page);
+    expect(snap.bundleDocs).toHaveLength(2);
   });
 });
 
@@ -203,7 +203,9 @@ test.describe("folder printing safety", () => {
       `<script>window.__pwned = 2</script>` +
       `<iframe srcdoc="<script>parent.__pwned = 3</script>"></iframe>` +
       `<a href=" javascript:window.__pwned = 4">click</a>` +
-      `<p onclick="window.__pwned = 5">text</p></article>`;
+      `<a href="file:///private/data">file</a>` +
+      `<p onclick="window.__pwned = 5" style="background:url(https://tracker.example)">text</p>` +
+      `<img src="https://github.com/y.png" srcset="https://tracker.example/x.png 2x"></article>`;
     await page.route("**/blob/main/docs/2-two.md", (route) =>
       (route.request().headers().accept || "").includes("application/json")
         ? route.fulfill({
@@ -218,7 +220,7 @@ test.describe("folder printing safety", () => {
     await panel(page).getByRole("button", { name: "Print folder" }).click();
     const snap = await waitForPrint(page);
     expect(snap.unsafeInBundle).toBe(0);
-    expect(snap.bundleImages).toBe(1); // the image itself is kept
+    expect(snap.bundleImages).toBe(2); // safe image elements themselves are kept
     expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
   });
 
@@ -291,5 +293,40 @@ test.describe("no document on the page", () => {
     page.once("dialog", (d) => d.accept());
     await trigger(page);
     expect((await waitForPrint(page)).colorMode).toBe("light");
+  });
+});
+
+test.describe("GitHub JSON contract", () => {
+  test("treats an unknown tree response as unavailable", async ({ page }) => {
+    await openPage(page, { stored: NO_PANEL });
+    await page.route("**/tree/main/docs", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ payload: {} }) })
+    );
+    await trigger(page);
+    const result = await page.evaluate(() => GHP.github.listMarkdown(GHP.github.pageInfo()));
+    expect(result).toBeNull();
+  });
+
+  test("rejects non-JSON responses", async ({ page }) => {
+    await openPage(page, { stored: NO_PANEL });
+    await page.route("**/tree/main/docs", (route) =>
+      route.fulfill({ status: 200, contentType: "text/html", body: "not json" })
+    );
+    await trigger(page);
+    await expect(page.evaluate(() => GHP.github.listMarkdown(GHP.github.pageInfo()))).rejects.toThrow(
+      "Expected JSON"
+    );
+  });
+
+  test("times out stalled GitHub responses", async ({ page }) => {
+    await openPage(page, { stored: NO_PANEL });
+    await page.route("**/slow-json", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      await route.fulfill({ status: 200, contentType: "application/json", body: "{}" }).catch(() => {});
+    });
+    await trigger(page);
+    await expect(page.evaluate(() => GHP.github.fetchJson("/slow-json", { timeout: 20 }))).rejects.toThrow(
+      "too long"
+    );
   });
 });
