@@ -113,7 +113,7 @@ find the element that wraps the rendered markdown; it usually has the class
 
 Use **Save as PDF** for each. Run the whole list with GitHub in light mode and
 again in dark mode (Settings → Appearance), and once with the link-URL option
-off.
+on.
 
 - [ ] A `.md` file with code blocks, tables, and images
 - [ ] A `.md` file with a Mermaid diagram

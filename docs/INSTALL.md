@@ -136,17 +136,27 @@ To change what gets printed:
 1. Right-click the extension's toolbar button and choose **Options**.
    (Or on `chrome://extensions`, click **Details** on the Print GitHub Doc card,
    then **Extension options**.)
-2. **Print link URLs after link text:** when ticked (the default), a link like
-   "the guide" prints as "the guide (https://github.com/…)" so the address is
-   readable on paper. Untick it for cleaner PDFs.
+2. **Print link URLs after link text:** off by default. When ticked, a link
+   like "the guide" prints as "the guide (https://github.com/…)" so the address
+   is readable on paper.
 
 Changes save automatically.
 
 ### Changing the keyboard shortcut
 
-1. Go to `chrome://extensions/shortcuts`.
-2. Find **Print GitHub Doc** and click the pencil icon next to the shortcut.
-3. Press the keys you want.
+The default is **Alt+Shift+P** (Mac: **Option+Shift+P**). You can change it to
+any letter or key combination you like, but Chrome only lets you do that on its
+own shortcuts page, not inside the extension:
+
+1. Open the extension's **Options** (see above). It shows the current shortcut
+   and a **Change shortcut…** button. Click it.
+   (Or type `chrome://extensions/shortcuts` in the address bar.)
+2. Find **Print GitHub Doc** and click the **pencil** icon next to the
+   shortcut box.
+3. Press the keys you want, for example **Ctrl+Shift+L**.
+   Chrome requires **Ctrl** or **Alt** (Mac: **Command**, **Ctrl**, or
+   **Option**) plus a letter or number; **Shift** is optional on top.
+4. It saves right away. The dropdown next to it should say **In Chrome**.
 
 If Alt+Shift+P is already used by another extension, the shortcut box will be
 empty; set one here.
@@ -161,6 +171,13 @@ empty; set one here.
    - **git:** run `git pull` in the folder.
 2. Go to `chrome://extensions`.
 3. On the **Print GitHub Doc** card, click the circular **reload** arrow.
+4. Reload any GitHub tabs you already had open.
+
+Chrome does **not** notice changed files on its own while it's running, so
+step 3 matters. Quitting and reopening Chrome also picks up the new files, but
+the reload arrow is quicker and certain.
+
+Your settings and custom shortcut are kept when you update.
 
 To see which version you have, look at the number on the card, or the
 [`VERSION`](../VERSION) file. What changed in each version is in

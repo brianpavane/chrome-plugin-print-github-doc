@@ -8,7 +8,7 @@ print white text on a black background. This extension prints **only the
 document**, always in **light colors**, using Chrome's normal print window, so
 you can send it to a printer or choose **Save as PDF**.
 
-**Version:** 0.1.0 ([changelog](CHANGELOG.md))
+**Version:** 0.2.0 ([changelog](CHANGELOG.md))
 
 ## Get started
 
@@ -23,7 +23,7 @@ Short version, if you've done this before:
    **Load unpacked**, and choose this folder.
 3. Pin the extension from the puzzle-piece menu.
 4. On a GitHub document, click the button or press **Alt+Shift+P**
-   (Mac: **Option+Shift+P**).
+   (Mac: **Option+Shift+P**). The shortcut can be changed; see the [install guide](docs/INSTALL.md#changing-the-keyboard-shortcut).
 
 ## What it prints
 
@@ -40,7 +40,7 @@ What you get:
   separate light and dark versions.
 - A header with the title, repository, file path, and page URL.
 - Collapsed sections (`<details>`) opened up so their contents print.
-- Link addresses printed after link text (can be turned off in **Options**).
+- Optionally, link addresses printed after link text (off by default; turn on in **Options**).
 - Long code lines wrapped instead of cut off, tables shown in full, fewer
   awkward page breaks, and all images loaded before printing.
 - The page goes back to normal when you close the print window.

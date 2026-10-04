@@ -9,7 +9,7 @@
   const html = document.documentElement;
   const undo = []; // functions that revert each change, run in reverse order
 
-  const defaults = { printLinkUrls: true };
+  const defaults = { printLinkUrls: false };
   const options = await chrome.storage.sync.get(defaults).catch(() => defaults);
 
   const root = findContent();

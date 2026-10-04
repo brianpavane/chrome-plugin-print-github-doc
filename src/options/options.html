@@ -21,6 +21,17 @@
         color: GrayText;
         font-size: 12px;
       }
+      h2 {
+        font-size: 14px;
+        margin: 16px 0 4px;
+      }
+      kbd {
+        font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+        padding: 1px 6px;
+        border: 1px solid GrayText;
+        border-radius: 4px;
+        margin-right: 8px;
+      }
       #status {
         height: 1.5em;
         color: GrayText;
@@ -36,8 +47,16 @@
         <div class="hint">e.g. "docs (https://github.com/…)". Useful on paper; adds clutter in PDFs.</div>
       </span>
     </label>
-    <p class="hint">Shortcut: Alt+Shift+P (change at chrome://extensions/shortcuts).</p>
     <div id="status"></div>
+    <h2>Keyboard shortcut</h2>
+    <p>
+      Current shortcut: <kbd id="shortcut">…</kbd>
+      <button type="button" id="changeShortcut">Change shortcut…</button>
+    </p>
+    <p class="hint">
+      Chrome only lets you set extension shortcuts on its own shortcuts page.
+      The button opens it: find "Print GitHub Doc", click the pencil, and press the keys you want.
+    </p>
     <script src="options.js"></script>
   </body>
 </html>
