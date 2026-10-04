@@ -1,4 +1,4 @@
-const defaults = { printLinkUrls: false };
+const defaults = globalThis.GHP_DEFAULTS;
 const status = document.getElementById("status");
 
 chrome.storage.sync.get(defaults).then((opts) => {

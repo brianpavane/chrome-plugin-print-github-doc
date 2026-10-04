@@ -83,6 +83,29 @@ than reloading it. Removing it also clears its settings.
 The full list is in [`CHANGELOG.md`](../CHANGELOG.md). Notes that affect how
 the extension behaves after upgrading:
 
+### 0.2.0 → 0.3.0
+
+- **A panel now appears before printing.** It lets you change settings for
+  one print and print a whole folder. If you'd rather print straight away as
+  before, open **Options** and untick **Show the options panel**. Pressing the
+  shortcut twice also prints right away.
+- **New: print a whole folder** of Markdown files as one document. See
+  [Print a whole folder](INSTALL.md#print-a-whole-folder-as-one-document).
+- **New: right-click menu item** "Print this GitHub document". This needs a
+  new permission (`contextMenus`). For an extension loaded from a folder,
+  Chrome doesn't ask you to approve it; reloading is enough. The menu item
+  appears after you reload the extension.
+- **New settings** in Options: include header, expand collapsed sections,
+  start each section on a new page, and show the panel. The defaults match
+  what 0.2.0 did, so printouts look the same unless you change them.
+- **Save as PDF file names** are now short, like `my-repo - 11-upgrading.pdf`,
+  instead of GitHub's long page title.
+- **Pages without a document** now offer to print the whole page in light
+  colors, instead of only showing a message.
+- The repository now includes development tools (`package.json`, `scripts/`,
+  `test/`). You don't need to install or run anything for them to use the
+  extension.
+
 ### 0.1.0 → 0.2.0
 
 - **Link URLs are no longer printed by default.** If you never touched this

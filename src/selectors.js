@@ -23,6 +23,9 @@ globalThis.GHP_SELECTORS = {
     "iframe[src*='viewscreen.githubusercontent.com']",
   ],
 
+  // Unrendered diagram blocks in fetched Markdown (folder printing).
+  diagramPlaceholders: ["section[data-type='mermaid']", "section.js-render-needs-enrichment"],
+
   // Links that shouldn't get their URL printed.
   skipLinkUrl: ["a.anchor", "a[aria-hidden='true']"],
 };

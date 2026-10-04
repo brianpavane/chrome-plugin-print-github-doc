@@ -22,8 +22,11 @@ Short version, if you've done this before:
 2. Open `chrome://extensions`, turn on **Developer mode**, click
    **Load unpacked**, and choose this folder.
 3. Pin the extension from the puzzle-piece menu.
-4. On a GitHub document, click the button or press **Alt+Shift+P**
-   (Mac: **Option+Shift+P**). The shortcut can be changed; see the [install guide](docs/INSTALL.md#changing-the-keyboard-shortcut).
+4. On a GitHub document, click the button, press **Alt+Shift+P**
+   (Mac: **Option+Shift+P**), or right-click → **Print this GitHub document**.
+   Pick options in the panel that appears and click **Print**. The shortcut can
+   be changed; see the
+   [install guide](docs/INSTALL.md#changing-the-keyboard-shortcut).
 
 ## What it prints
 
@@ -40,10 +43,23 @@ What you get:
   separate light and dark versions.
 - A header with the title, repository, file path, and page URL.
 - Collapsed sections (`<details>`) opened up so their contents print.
-- Optionally, link addresses printed after link text (off by default; turn on in **Options**).
 - Long code lines wrapped instead of cut off, tables shown in full, fewer
   awkward page breaks, and all images loaded before printing.
+- A short **Save as PDF** file name, like `my-repo - 11-upgrading.pdf`.
 - The page goes back to normal when you close the print window.
+
+Choose per print, in a small panel before the print window opens (or set
+defaults in **Options**):
+
+- Include the header or not.
+- Print link addresses after link text (off by default).
+- Start each top-level section on a new page.
+- **Print a whole folder** of Markdown files as one document: a contents page,
+  then every file in order, each starting on a new page. Works in private
+  repositories too.
+
+On a GitHub page with no document, it offers to print the whole page in light
+colors instead.
 
 Mermaid diagrams are drawn by GitHub in a way the extension can't restyle. In
 dark mode they're color-inverted so they print light; colors may shift
@@ -51,10 +67,11 @@ slightly.
 
 ## Privacy
 
-The extension only runs when you click its button (or press the shortcut) on
-a github.com page, and only on that tab. It collects nothing and makes no
-network requests. Your one setting (print link URLs) is stored in your Chrome
-profile.
+The extension only runs when you use it (button, shortcut, or right-click) on
+a github.com page, and only on that tab. It collects nothing and sends nothing
+anywhere. The only network requests it makes are to github.com itself, to
+fetch the other documents when you print a whole folder. Your settings are
+stored in your Chrome profile.
 
 ## Documentation
 
@@ -68,8 +85,10 @@ profile.
 
 ## Requirements
 
-Google Chrome, or another Chromium-based browser (Edge, Brave, and others).
-Nothing else needs to be installed: the extension is plain JavaScript and CSS
-with no dependencies or build step, and everything it needs is in this
-repository. Node.js is only needed if you want to regenerate the icons (see
-[Development](docs/DEVELOPMENT.md#regenerating-icons)).
+**To use it:** Google Chrome, or another Chromium-based browser (Edge, Brave,
+and others). Nothing else needs to be installed: the extension is plain
+JavaScript and CSS with no dependencies or build step, and everything it needs
+is in this repository.
+
+**To work on the code:** Node.js 20+ and `npm install`, which adds the test
+runner. See [Development](docs/DEVELOPMENT.md#requirements).

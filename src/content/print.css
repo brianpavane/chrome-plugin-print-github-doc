@@ -1,9 +1,19 @@
-/* Print styles, active only while html.ghp-printing is set by print.js.
-   Light colors come from GitHub's own theme (print.js forces light mode);
+/* Print styles, active only while html.ghp-printing is set by prepare.js.
+   Light colors come from GitHub's own theme (prepare.js forces light mode);
    these rules handle what to show and how it paginates. */
 
+/* Only visible in print. */
 .ghp-print-header {
   display: none;
+}
+
+/* The folder bundle is laid out off-screen (not display: none) so GitHub
+   can render diagrams inside it while the print is being prepared. */
+.ghp-bundle {
+  position: absolute !important;
+  left: -100000px !important;
+  top: 0 !important;
+  width: 880px !important;
 }
 
 @media print {
@@ -12,7 +22,9 @@
   }
 
   html.ghp-printing,
-  html.ghp-printing body {
+  html.ghp-printing body,
+  html.ghp-printing-whole,
+  html.ghp-printing-whole body {
     background: #fff !important;
     color-scheme: light !important;
   }
@@ -125,7 +137,62 @@
     filter: invert(1) hue-rotate(180deg);
   }
 
-  /* Link URLs (only on links print.js marked; controlled by options). */
+  /* Section page breaks (option). */
+  html.ghp-printing [data-ghp-root] .ghp-break-before {
+    break-before: page;
+  }
+
+  /* Folder bundle: contents list, then each document on a new page. */
+  html.ghp-printing .ghp-bundle {
+    display: block !important;
+    position: static !important;
+    width: auto !important;
+  }
+
+  html.ghp-printing .ghp-contents-title {
+    font-size: 14pt;
+    font-weight: 600;
+    color: #1f2328;
+    margin: 0 0 8px;
+  }
+
+  html.ghp-printing .ghp-contents ol {
+    margin: 0;
+    padding-left: 1.5em;
+    color: #1f2328;
+  }
+
+  html.ghp-printing .ghp-doc {
+    break-before: page;
+  }
+
+  html.ghp-printing .ghp-doc-header {
+    margin: 0 0 12px;
+    padding: 0 0 6px;
+    border-bottom: 1px solid #d0d7de;
+    font-size: 8.5pt;
+    line-height: 1.4;
+    color: #59636e;
+    word-break: break-all;
+  }
+
+  html.ghp-printing .ghp-doc > .markdown-body {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    border: 0 !important;
+  }
+
+  /* Diagrams GitHub didn't render in the bundle: show their source. */
+  html.ghp-printing .ghp-show-source .render-plaintext-hidden {
+    display: block !important;
+  }
+
+  html.ghp-printing .ghp-show-source .js-render-enrichment-loader {
+    display: none !important;
+  }
+
+  /* Link URLs (only on links prepare.js marked; controlled by options). */
   html.ghp-printing [data-ghp-href]::after {
     content: " (" attr(data-ghp-href) ")";
     font-size: 0.85em;

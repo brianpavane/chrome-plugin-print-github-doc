@@ -49,7 +49,10 @@ git clone https://github.com/brianpavane/chrome-plugin-print-github-doc.git
 ### Check you have the right folder
 
 Open the folder. You should see a file called **`manifest.json`** directly
-inside it, next to folders named `src`, `icons`, and `docs`.
+inside it, next to folders named `src`, `icons`, and `docs`. (There are a few
+other files and folders too, such as `scripts`, `test`, and `package.json`.
+They're only for working on the extension's code; you can ignore them, and you
+don't need to install anything for them.)
 
 If you instead see one more folder with the same name, go into that one: the
 folder you want is the one where `manifest.json` sits.
@@ -102,23 +105,83 @@ working either way.
 
 ## Using it
 
+### Print one document
+
 1. Open a GitHub document, for example
    <https://github.com/brianpavane/alexa-personal-audio/blob/main/docs/11-upgrading.md>.
    It works on:
-   - a markdown (`.md`) file,
+   - a Markdown (`.md`) file,
    - a repository's front page (it prints the README),
    - a wiki page.
-2. Click the extension's toolbar button, or press **Alt+Shift+P**
-   (on a Mac: **Option+Shift+P**).
-3. Chrome's print window opens, showing only the document, in light colors.
-4. Choose where it goes:
+2. Start the extension in any of these three ways:
+   - click its button in the toolbar,
+   - press **Alt+Shift+P** (on a Mac: **Option+Shift+P**),
+   - right-click anywhere on the page and choose
+     **Print this GitHub document**.
+3. A small **Print GitHub Doc** panel appears in the top-right corner of the
+   page. It shows the settings for this print (see
+   [The options panel](#the-options-panel)). Change any you like, then click
+   **Print** (or press **Enter**). To back out, click **Cancel** or press
+   **Esc**.
+4. Chrome's print window opens, showing only the document, in light colors.
+5. Choose where it goes:
    - **To paper:** pick your printer under **Destination** and click **Print**.
    - **To a PDF file:** set **Destination** to **Save as PDF**, click **Save**,
-     and pick where to save it.
-5. Close the print window. The GitHub page goes back to how it looked before.
+     and pick where to save it. The file name is filled in for you, like
+     `alexa-personal-audio - 11-upgrading.pdf`.
+6. Close the print window. The GitHub page goes back to how it looked before.
 
-The button looks grey and does nothing on sites other than GitHub. That's
-expected.
+Tip: pressing the shortcut a second time while the panel is open is the same
+as clicking **Print**, so **Alt+Shift+P** twice prints right away.
+
+The button looks grey, and the right-click item doesn't appear, on sites other
+than GitHub. That's expected.
+
+### Print a whole folder as one document
+
+If the document is in a folder with other Markdown files (for example a
+`docs` folder with `01-intro.md` … `11-upgrading.md`), you can print them all
+together as one PDF.
+
+1. Open any one of the files in that folder, the folder itself, or the
+   repository's front page (for the top-level files).
+2. Start the extension. After a moment, the panel shows
+   **Print all N Markdown files in docs/ as one document**. Tick it.
+3. Click **Print folder**. The panel shows "Loading documents… 3 of 11" while
+   it gathers them. Then the print window opens.
+
+The printout has a contents page listing every document, then each document
+starting on a new page with its file name and address at the top. Files are
+in name order, with `README.md` first and numbers sorted naturally
+(`2-…` comes before `10-…`). Only files directly in that folder are included,
+not ones in subfolders. It works in private repositories you have access to.
+
+Diagrams (Mermaid) in a folder printout: GitHub usually draws them; if it
+hasn't within a few seconds, the diagram's source text is printed instead. To
+get the drawn diagram in that case, print that file on its own.
+
+### If there's no document on the page
+
+On GitHub pages without a rendered document (an issue list, a code file, or a
+`.md` file in **Code** view instead of **Preview**), the panel says so and
+offers **Print whole page**. That prints the page as it is, but in light
+colors. If the folder has Markdown files, you can tick the folder option
+instead.
+
+### The options panel
+
+Each tick box applies to this print only, unless you also tick
+**Remember these settings**.
+
+- **Include header:** the title, repository, file path, and page address at
+  the top of the first page.
+- **Print link URLs after link text:** a link like "the guide" prints as
+  "the guide (https://github.com/…)" so the address is readable on paper.
+- **Expand collapsed sections:** opens "click to expand" sections so their
+  contents print.
+- **Start each section on a new page:** each top-level heading starts a new
+  page. The first section stays on page one with the title.
+- **Remember these settings:** saves your choices as the new defaults.
 
 ### Tips for the print window
 
@@ -131,14 +194,18 @@ expected.
 
 ### Settings
 
-To change what gets printed:
+To change the defaults:
 
 1. Right-click the extension's toolbar button and choose **Options**.
    (Or on `chrome://extensions`, click **Details** on the Print GitHub Doc card,
    then **Extension options**.)
-2. **Print link URLs after link text:** off by default. When ticked, a link
-   like "the guide" prints as "the guide (https://github.com/…)" so the address
-   is readable on paper.
+2. Tick or untick:
+   - **Show the options panel:** on by default. Turn it off to skip the panel
+     and print straight away with your defaults. (Folder printing needs the
+     panel.)
+   - **Include header**, **Print link URLs**, **Expand collapsed sections**,
+     **Start each section on a new page:** the defaults the panel starts with.
+     Out of the box: header on, link URLs off, expand on, new pages off.
 
 Changes save automatically.
 
@@ -208,12 +275,29 @@ still grey, reload the page.
 Reload the GitHub page and try again. If you just installed or reloaded the
 extension, pages that were already open need a reload.
 
-**"Couldn't find a rendered document on this page."**
+**The panel says "No rendered document was found on this page."**
 - On a `.md` file, GitHub may be showing the raw text. Click **Preview** above
   the file and try again.
-- The page might not be a supported one (for example an issue or pull request).
+- The page might not be a supported one (for example an issue or pull
+  request). You can still use **Print whole page** to print it in light
+  colors.
 - GitHub may have changed its page layout. Please
   [open an issue](https://github.com/brianpavane/chrome-plugin-print-github-doc/issues).
+
+**The folder option doesn't appear in the panel.**
+- The folder has no other Markdown files, or you're on a page that isn't
+  inside a repository folder (a wiki page, for example).
+- Folder printing relies on how GitHub's website works internally, which can
+  change. If it stops appearing everywhere, please open an issue.
+
+**"Couldn't load the folder: …"**
+One of the files couldn't be fetched from GitHub. Check you're still signed in
+to GitHub (for private repositories), reload the page, and try again. Click
+**Cancel** to close the message.
+
+**The panel is in the way / I never change the settings.**
+Turn off **Show the options panel** in the extension's Options. Printing then
+starts right away with your defaults.
 
 **A diagram prints with odd colors.**
 Mermaid diagrams are drawn by GitHub in a way the extension can't restyle. When

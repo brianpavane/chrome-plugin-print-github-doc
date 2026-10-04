@@ -9,6 +9,33 @@ The version number lives in two places that must match:
 
 ## [Unreleased]
 
+### Added
+
+- Options panel before printing: change the header, link URLs, expanding
+  collapsed sections, and section page breaks for one print, and optionally
+  remember them. Enter prints, Esc cancels, and triggering the extension again
+  while the panel is open prints.
+- Print a whole folder of Markdown files as one document, from a file page, a
+  folder page, or the repository home page: contents page, then each file on
+  a new page with its path and URL. README first, natural number order. Works
+  in private repositories.
+- Option to start each top-level section on a new page.
+- Right-click menu item "Print this GitHub document" on github.com pages.
+- Short Save as PDF file names (e.g. "my-repo - 11-upgrading").
+- When a page has no rendered document, offer to print the whole page in
+  light colors.
+- Options page: all settings, plus "Show the options panel".
+- Automated tests (Playwright, using the installed Chrome), static checks,
+  `npm run package` to build the store zip, and `npm run release` to cut a
+  release.
+
+### Changed
+
+- The content script is split into modules (`github.js`, `prepare.js`,
+  `bundle.js`, `panel.js`, `main.js`) and default settings moved to
+  `src/shared/defaults.js`.
+- New permission: `contextMenus` (for the right-click item).
+
 ## [0.2.0] - 2026-10-03
 
 ### Changed

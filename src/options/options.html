@@ -13,6 +13,7 @@
         min-width: 320px;
       }
       label {
+        padding: 4px 0;
         display: flex;
         gap: 8px;
         align-items: flex-start;
@@ -40,6 +41,23 @@
     </style>
   </head>
   <body>
+    <h2>Before printing</h2>
+    <label>
+      <input type="checkbox" id="showPanel" />
+      <span>
+        Show the options panel
+        <div class="hint">Lets you change the settings below for one print, or print a whole folder. When off, printing starts right away with these defaults.</div>
+      </span>
+    </label>
+
+    <h2>Defaults</h2>
+    <label>
+      <input type="checkbox" id="includeHeader" />
+      <span>
+        Include header
+        <div class="hint">Title, repository, file path, and page URL at the top of the first page.</div>
+      </span>
+    </label>
     <label>
       <input type="checkbox" id="printLinkUrls" />
       <span>
@@ -47,7 +65,22 @@
         <div class="hint">e.g. "docs (https://github.com/…)". Useful on paper; adds clutter in PDFs.</div>
       </span>
     </label>
+    <label>
+      <input type="checkbox" id="expandDetails" />
+      <span>
+        Expand collapsed sections
+        <div class="hint">Opens "click to expand" (&lt;details&gt;) sections so their contents print.</div>
+      </span>
+    </label>
+    <label>
+      <input type="checkbox" id="sectionPageBreaks" />
+      <span>
+        Start each section on a new page
+        <div class="hint">Each top-level heading begins a new page (the first section stays with the title).</div>
+      </span>
+    </label>
     <div id="status"></div>
+
     <h2>Keyboard shortcut</h2>
     <p>
       Current shortcut: <kbd id="shortcut">…</kbd>
@@ -57,6 +90,7 @@
       Chrome only lets you set extension shortcuts on its own shortcuts page.
       The button opens it: find "Print GitHub Doc", click the pencil, and press the keys you want.
     </p>
+    <script src="../shared/defaults.js"></script>
     <script src="options.js"></script>
   </body>
 </html>
