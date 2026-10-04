@@ -8,7 +8,7 @@ print white text on a black background. This extension prints **only the
 document**, always in **light colors**, using Chrome's normal print window, so
 you can send it to a printer or choose **Save as PDF**.
 
-**Version:** 0.5.0 ([changelog](CHANGELOG.md))
+**Version:** 0.5.1 ([changelog](CHANGELOG.md))
 
 ## Get started
 

@@ -9,6 +9,8 @@ The version number lives in two places that must match:
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-10-04
+
 ### Fixed
 
 - Closing the panel (Esc, ×, or Cancel) while a folder loading problem was
@@ -186,7 +188,8 @@ The version number lives in two places that must match:
 - Button is enabled only on github.com.
 - Options page, icons, and full documentation.
 
-[Unreleased]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/brianpavane/chrome-plugin-print-github-doc/compare/v0.3.0...v0.4.0
