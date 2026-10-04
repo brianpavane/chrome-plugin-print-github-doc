@@ -65,7 +65,7 @@ GHP.github = (() => {
     return h1?.textContent.trim() || baseName(info.file) || info.repo;
   }
 
-  // Short name used as the PDF file name, e.g. "my-repo - 11-upgrading".
+  // Short name used as the PDF file name, e.g. "cli - install_linux".
   function pdfTitle(info, { folder } = {}) {
     if (folder) return `${info.repo} - ${folder.dir ? baseName(folder.dir) : "docs"}`;
     if (info.kind === "wiki") return `${info.repo} - wiki - ${wikiTitle()}`;

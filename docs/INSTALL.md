@@ -107,8 +107,8 @@ working either way.
 
 ### Print one document
 
-1. Open a GitHub document, for example
-   <https://github.com/brianpavane/alexa-personal-audio/blob/main/docs/11-upgrading.md>.
+1. Open a GitHub document, for example the GitHub CLI's Linux install guide:
+   <https://github.com/cli/cli/blob/trunk/docs/install_linux.md>.
    It works on:
    - a Markdown (`.md`) file,
    - a repository's front page (it prints the README),
@@ -128,7 +128,7 @@ working either way.
    - **To paper:** pick your printer under **Destination** and click **Print**.
    - **To a PDF file:** set **Destination** to **Save as PDF**, click **Save**,
      and pick where to save it. The file name is filled in for you, like
-     `alexa-personal-audio - 11-upgrading.pdf`.
+     `cli - install_linux.pdf`.
 6. Close the print window. The GitHub page goes back to how it looked before.
 
 Tip: pressing the shortcut a second time while the panel is open is the same
@@ -139,15 +139,17 @@ than GitHub. That's expected.
 
 ### Print a whole folder as one document
 
-If the document is in a folder with other Markdown files (for example a
-`docs` folder with `01-intro.md` … `11-upgrading.md`), you can print them all
-together as one PDF.
+If the document is in a folder with other Markdown files, you can print them
+all together as one PDF. For example, the GitHub CLI's
+[`docs` folder](https://github.com/cli/cli/tree/trunk/docs) has 22 Markdown
+guides; from the install guide above, you can print all of them as one
+document.
 
 1. Open any one of the files in that folder, the folder itself, or the
    repository's front page (for the top-level files).
 2. Start the extension. After a moment, the panel shows
    **Print all N Markdown files in docs/ as one document**. Tick it.
-3. Click **Print folder**. The panel shows "Loading documents… 3 of 11" while
+3. Click **Print folder**. The panel shows "Loading documents… 3 of 22" while
    it gathers them. Then the print window opens.
 
 The printout has a contents page listing every document, then each document

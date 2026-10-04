@@ -23,7 +23,7 @@ The version number lives in two places that must match:
   in private repositories.
 - Option to start each top-level section on a new page.
 - Right-click menu item "Print this GitHub document" on github.com pages.
-- Short Save as PDF file names (e.g. "my-repo - 11-upgrading").
+- Short Save as PDF file names (e.g. "cli - install_linux").
 - When a page has no rendered document, offer to print the whole page in
   light colors.
 - Options page: all settings, plus "Show the options panel".

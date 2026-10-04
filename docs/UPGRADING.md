@@ -98,7 +98,7 @@ the extension behaves after upgrading:
 - **New settings** in Options: include header, expand collapsed sections,
   start each section on a new page, and show the panel. The defaults match
   what 0.2.0 did, so printouts look the same unless you change them.
-- **Save as PDF file names** are now short, like `my-repo - 11-upgrading.pdf`,
+- **Save as PDF file names** are now short, like `cli - install_linux.pdf`,
   instead of GitHub's long page title.
 - **Pages without a document** now offer to print the whole page in light
   colors, instead of only showing a message.

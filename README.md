@@ -45,7 +45,7 @@ What you get:
 - Collapsed sections (`<details>`) opened up so their contents print.
 - Long code lines wrapped instead of cut off, tables shown in full, fewer
   awkward page breaks, and all images loaded before printing.
-- A short **Save as PDF** file name, like `my-repo - 11-upgrading.pdf`.
+- A short **Save as PDF** file name, like `cli - install_linux.pdf`.
 - The page goes back to normal when you close the print window.
 
 Choose per print, in a small panel before the print window opens (or set
