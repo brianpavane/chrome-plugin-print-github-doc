@@ -9,6 +9,14 @@ The version number lives in two places that must match:
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/PUBLISHING.md`: full step-by-step walkthrough of building, checking,
+  and uploading the zip, filling in the dashboard, submitting, publishing,
+  and updating, each with a simple version and details; an "At a glance"
+  checklist; and a table of upload errors and fixes. No changes to the
+  extension itself.
+
 ## [0.4.0] - 2026-10-04
 
 ### Changed
