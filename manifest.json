@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Print GitHub Doc",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Cleanly print or save to PDF a GitHub markdown document, README, or wiki page.",
   "permissions": ["activeTab", "scripting", "storage", "declarativeContent", "contextMenus"],
   "background": {
