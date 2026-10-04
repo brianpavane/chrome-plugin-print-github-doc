@@ -6,8 +6,11 @@ GHP.bundle = (() => {
   const CONCURRENCY = 4;
 
   // -> detached <div class="ghp-bundle"> with a contents list and one
-  // <section class="ghp-doc"> per file, in listing order.
-  async function build(info, listing, onProgress = () => {}, { signal } = {}) {
+  // <section class="ghp-doc"> per file, in listing order. Files that fail
+  // are left out and listed in bundle.ghpFailures. Pass the same `cache`
+  // (a Map) to a retry so only the files that failed are fetched again.
+  // Errors thrown with `retryable: true` may succeed if tried again.
+  async function build(info, listing, onProgress = () => {}, { signal, cache = new Map() } = {}) {
     if (!listing?.files) throw new Error("The folder listing is no longer available.");
     const { files } = listing;
     if (files.length > GHP.github.MAX_FOLDER_FILES) {
@@ -30,7 +33,8 @@ GHP.bundle = (() => {
     const htmls = await mapLimit(files, CONCURRENCY, async (file) => {
       if (signal?.aborted) throw signal.reason || new DOMException("Cancelled", "AbortError");
       try {
-        const html = await GHP.github.fetchRendered(file, { signal });
+        const html = cache.get(file.url) ?? (await GHP.github.fetchRendered(file, { signal }));
+        cache.set(file.url, html);
         onProgress(++done, files.length);
         return html;
       } catch (err) {
@@ -44,14 +48,17 @@ GHP.bundle = (() => {
       htmls[i] && typeof htmls[i] === "object" ? [{ file, error: htmls[i].error }] : []
     );
     if (failures.length === files.length) {
-      throw new Error(`None of the ${files.length} documents could be loaded.`);
+      throw Object.assign(new Error(`None of the ${files.length} documents could be loaded.`), { retryable: true });
     }
     const loadedCount = files.length - failures.length;
     heading.textContent = `Contents (${loadedCount} document${loadedCount === 1 ? "" : "s"})`;
     if (failures.length) {
       const warning = document.createElement("p");
       warning.className = "ghp-bundle-warning";
-      warning.textContent = `${failures.length} document${failures.length === 1 ? " was" : "s were"} omitted because GitHub could not load ${failures.length === 1 ? "it" : "them"}.`;
+      const one = failures.length === 1;
+      warning.textContent =
+        `${failures.length} document${one ? " was" : "s were"} left out because GitHub couldn't load ` +
+        `${one ? "it" : "them"}: ${failures.map(({ file }) => file.path).join(", ")}.`;
       contents.append(warning);
     }
 

@@ -31,9 +31,10 @@ export async function openPage(page, { url = DOC_URL, fixture = "doc.html", stor
   });
 
   await page.addInitScript((stored) => {
-    // Stand-in for chrome.storage.sync.
+    // Stand-in for chrome.storage.sync and chrome.storage.local.
     window.chrome = window.chrome || {};
     window.__saved = null;
+    window.__local = {};
     window.chrome.storage = {
       sync: {
         get: async (defaults) => ({ ...defaults, ...stored }),
@@ -42,10 +43,13 @@ export async function openPage(page, { url = DOC_URL, fixture = "doc.html", stor
         },
       },
       local: {
-        get: async () => ({}),
-        set: async () => {},
+        get: async () => ({ ...window.__local }),
+        set: async (values) => Object.assign(window.__local, values),
       },
     };
+    // The fixtures have no GitHub script to render diagrams, so don't wait
+    // the full 4 s for it.
+    window.GHP_TEST_DIAGRAM_WAIT_MS = 250;
     // Record the print-time state instead of opening a dialog.
     window.__prints = [];
     window.print = () => window.__prints.push(window.__snapshot());
@@ -84,6 +88,7 @@ export async function openPage(page, { url = DOC_URL, fixture = "doc.html", stor
           ".ghp-bundle script, .ghp-bundle iframe, .ghp-bundle [onerror], .ghp-bundle [onclick], .ghp-bundle [style], .ghp-bundle [srcset], .ghp-bundle a[href^='javascript:'], .ghp-bundle a[href^='file:']"
         ).length,
         bundleImages: document.querySelectorAll(".ghp-bundle img[src]").length,
+        bundleWarning: q(".ghp-bundle-warning")?.textContent ?? null,
       };
     };
   }, stored);
@@ -102,6 +107,9 @@ export async function waitForPrint(page, count = 1) {
   await page.waitForFunction((n) => window.__prints.length >= n, count, { timeout: 15000 });
   return page.evaluate(() => window.__prints.at(-1));
 }
+
+// Whether a new click/shortcut would start a fresh run (none in progress).
+export const idle = (page) => page.evaluate(() => !globalThis.GHP.active);
 
 export const panel = (page) => page.locator(".ghp-panel-host .panel");
 

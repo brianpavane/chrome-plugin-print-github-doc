@@ -156,13 +156,18 @@ GHP.panel = (() => {
       resolveChoice({ action, options: chosen, folder, remember: $("remember").checked });
     }
 
+    // Before a choice is made, backing out answers "cancel". After it (while
+    // documents load, or while a folder error is shown), it closes the panel
+    // and stops whatever is in progress.
+    const backOut = () => (settled ? close({ cancel: true }) : finish("cancel"));
+
     $("print").addEventListener("click", () => finish("print"));
-    $("cancel").addEventListener("click", () => (settled ? close() : finish("cancel")));
-    shadow.querySelector(".close").addEventListener("click", () => (settled ? close() : finish("cancel")));
+    $("cancel").addEventListener("click", backOut);
+    shadow.querySelector(".close").addEventListener("click", backOut);
     shadow.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        settled ? close() : finish("cancel");
+        backOut();
       } else if (e.key === "Tab") {
         const focusable = [...shadow.querySelectorAll("button:not(:disabled), input:not(:disabled)")].filter(
           (el) => !el.closest("[hidden]")
@@ -176,9 +181,11 @@ GHP.panel = (() => {
           e.preventDefault();
           first?.focus();
         }
-      } else if (e.key === "Enter" && !settled && shadow.activeElement?.tagName === "BUTTON") {
+      } else if (e.key === "Enter" && !settled) {
+        // Enter on a button presses that button; anywhere else it prints.
         e.preventDefault();
-        shadow.activeElement.click();
+        if (shadow.activeElement?.tagName === "BUTTON") shadow.activeElement.click();
+        else finish("print");
       }
     });
 
@@ -187,43 +194,68 @@ GHP.panel = (() => {
     $("print").focus();
 
     let closed = false;
-    function close() {
+    let endRecovery = null; // set while recoverFolder() waits for an answer
+    // cancel: the user backed out, so stop any requests still running.
+    function close({ cancel = false } = {}) {
       if (closed) return;
       closed = true;
-      onCancel();
+      if (cancel) onCancel();
+      endRecovery?.("cancel");
       host.remove();
       if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+    }
+
+    function status(text, { error = false } = {}) {
+      $("status").textContent = text;
+      $("status").classList.toggle("error", error);
     }
 
     return {
       choice,
       submit: () => finish("print"),
-      status(text, { error = false } = {}) {
-        $("status").textContent = text;
-        $("status").classList.toggle("error", error);
-      },
-      recoverFolder(failures, loaded, fatalMessage = "") {
+      status,
+      // Shows a folder loading problem and resolves with the user's answer:
+      // "retry", "partial" (print the documents that loaded), or "cancel".
+      // `error` is a message for a failure that left nothing to print.
+      recoverFolder({ failures = [], loaded = 0, error = "", retryable = true }) {
+        if (closed) return Promise.resolve("cancel");
         const names = failures.slice(0, 3).map(({ file }) => file.name).join(", ");
         const more = failures.length > 3 ? ` and ${failures.length - 3} more` : "";
-        $("status").textContent = fatalMessage
-          ? `Couldn't load the folder: ${fatalMessage}`
-          : `${failures.length} document${failures.length === 1 ? "" : "s"} failed (${names}${more}).`;
-        $("status").classList.add("error");
-        $("print").disabled = loaded === 0;
-        if (loaded) $("print").textContent = `Print ${loaded} loaded`;
-        const retry = document.createElement("button");
-        retry.type = "button";
-        retry.className = "btn";
-        retry.textContent = "Retry failed";
-        $("print").before(retry);
+        status(
+          error
+            ? `Couldn't load the folder: ${error}`
+            : `${failures.length} document${failures.length === 1 ? "" : "s"} failed (${names}${more}).`,
+          { error: true }
+        );
+        const print = $("print");
+        print.disabled = loaded === 0;
+        print.textContent = loaded ? `Print ${loaded} loaded` : "Print folder";
+        let retry = null;
+        if (retryable) {
+          retry = document.createElement("button");
+          retry.type = "button";
+          retry.className = "btn";
+          retry.textContent = failures.length ? "Retry failed" : "Retry";
+          print.before(retry);
+        }
+        (retry || (loaded ? print : $("cancel"))).focus();
+
         return new Promise((resolve) => {
-          const finishRecovery = (answer) => {
-            retry.remove();
+          const listeners = new AbortController();
+          endRecovery = (answer) => {
+            endRecovery = null;
+            listeners.abort();
+            retry?.remove();
+            print.disabled = true;
+            if (answer === "retry") {
+              print.textContent = "Print folder";
+              status("Retrying…");
+              $("cancel").focus();
+            }
             resolve(answer);
           };
-          retry.addEventListener("click", () => finishRecovery("retry"), { once: true });
-          $("print").addEventListener("click", () => finishRecovery("partial"), { once: true });
-          $("cancel").addEventListener("click", () => finishRecovery("cancel"), { once: true });
+          retry?.addEventListener("click", () => endRecovery("retry"), { signal: listeners.signal });
+          print.addEventListener("click", () => endRecovery("partial"), { signal: listeners.signal });
         });
       },
       close,

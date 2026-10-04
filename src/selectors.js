@@ -26,6 +26,10 @@ globalThis.GHP_SELECTORS = {
   // Unrendered diagram blocks in fetched Markdown (folder printing).
   diagramPlaceholders: ["section[data-type='mermaid']", "section.js-render-needs-enrichment"],
 
+  // JSON GitHub embeds in the page for its web app; names the branch of the
+  // file being viewed.
+  embeddedData: ["script[type='application/json'][data-target='react-app.embeddedData']"],
+
   // Links that shouldn't get their URL printed.
   skipLinkUrl: ["a.anchor", "a[aria-hidden='true']"],
 };

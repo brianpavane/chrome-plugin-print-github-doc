@@ -18,15 +18,16 @@
     const saved = await chrome.storage.sync
       .get(globalThis.GHP_DEFAULTS)
       .catch(() => ({ ...globalThis.GHP_DEFAULTS }));
-    const info = G.github.pageInfo();
+    let info = G.github.pageInfo();
     const root = G.github.findContent();
+    // Shown on the Options page to tell "GitHub changed its markup" from
+    // "this page has no document". Deliberately no URL or page content.
     chrome.storage.local
       .set({
         ghpLastDiagnostic: {
           at: new Date().toISOString(),
           pageType: info.kind,
           documentFound: !!root,
-          url: info.url,
         },
       })
       .catch(() => {});
@@ -38,6 +39,7 @@
 
     let choice;
     let folderPromise = Promise.resolve(null);
+    let knownListing = null; // the folder listing, once it has arrived
 
     if (saved.showPanel) {
       folderPromise = G.github.listMarkdown(info, { signal: controller.signal }).catch((err) => {
@@ -45,6 +47,7 @@
         console.warn("Print Doc for GitHub: couldn't list folder", err);
         return { files: [], error: err };
       });
+      folderPromise.then((listing) => (knownListing = listing));
       panel = G.panel.open({
         options: saved,
         hasDocument: !!root,
@@ -73,30 +76,33 @@
     let listing = null;
     if (choice.folder) {
       listing = await folderPromise;
-      while (!controller.signal.aborted) {
+      const cache = new Map(); // documents already loaded, kept across retries
+      for (;;) {
         try {
           bundle = await G.bundle.build(
             info,
             listing,
-            (done, total) => panel?.status(`Loading documents… ${done} of ${total}`),
-            { signal: controller.signal }
+            (done, total) => panel.status(`Loading documents… ${done} of ${total}`),
+            { signal: controller.signal, cache }
           );
         } catch (err) {
           if (controller.signal.aborted) return;
           console.error("Print Doc for GitHub:", err);
-          const recovery = await panel.recoverFolder([], 0, err.message);
-          if (recovery === "retry") continue;
+          const answer = await panel.recoverFolder({ error: err.message, retryable: !!err.retryable });
+          if (answer === "retry") continue;
           return;
         }
-        const failures = bundle.ghpFailures || [];
+        const failures = bundle.ghpFailures;
         if (!failures.length) break;
-        const recovery = await panel.recoverFolder(failures, listing.files.length - failures.length);
-        if (recovery === "retry") continue;
-        if (recovery === "cancel") return;
+        const answer = await panel.recoverFolder({ failures, loaded: listing.files.length - failures.length });
+        if (answer === "retry") continue;
+        if (answer !== "partial") return;
         break;
       }
-      if (panel?.closed) return; // cancelled while loading
+      if (panel.closed) return; // cancelled while loading
     }
+
+    info = G.github.resolveFile(info, { listing: listing || knownListing });
 
     panel?.status("Preparing…");
     const session = await G.prepare({
@@ -119,6 +125,7 @@
     alert(`Print Doc for GitHub: something went wrong.\n\n${err.message}`);
   } finally {
     G.active = null;
+    controller.abort(); // stop a folder listing still in flight
     // Close the panel unless it's showing an error for the user to read.
     if (panel && !panel.closed && !panel.hasError) panel.close();
   }

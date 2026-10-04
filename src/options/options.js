@@ -1,11 +1,19 @@
 const defaults = globalThis.GHP_DEFAULTS;
 const status = document.getElementById("status");
 document.getElementById("version").textContent = chrome.runtime.getManifest().version;
+const PAGE_TYPES = {
+  blob: "a file",
+  tree: "a folder",
+  home: "a repository home page",
+  wiki: "a wiki page",
+  other: "another GitHub page",
+};
 chrome.storage.local.get("ghpLastDiagnostic").then(({ ghpLastDiagnostic: d }) => {
   if (!d) return;
   const when = new Date(d.at).toLocaleString();
   document.getElementById("diagnostics").textContent =
-    `Last invocation: ${d.pageType} page; document ${d.documentFound ? "found" : "not found"}; ${when}.`;
+    `Last used ${when} on ${PAGE_TYPES[d.pageType] || "a GitHub page"}: ` +
+    `document ${d.documentFound ? "found" : "not found"}.`;
 });
 
 chrome.storage.sync.get(defaults).then((opts) => {

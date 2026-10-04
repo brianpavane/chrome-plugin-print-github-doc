@@ -19,6 +19,17 @@ const MENU_ID = "print-github-doc";
 chrome.runtime.onInstalled.addListener(setup);
 chrome.runtime.onStartup.addListener(setup);
 
+// 0.5.0 saved the page URL in its last-run diagnostic; drop it on update.
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason !== "update") return;
+  chrome.storage.local.get("ghpLastDiagnostic").then(({ ghpLastDiagnostic: d }) => {
+    if (d && "url" in d) {
+      const { url, ...rest } = d;
+      chrome.storage.local.set({ ghpLastDiagnostic: rest });
+    }
+  });
+});
+
 function setup() {
   // Grey out the button everywhere except GitHub.
   chrome.action.disable();

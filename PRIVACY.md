@@ -12,7 +12,8 @@ data. In short: **it collects nothing and sends nothing anywhere.**
   github.com tab only after you click its button, press its keyboard shortcut,
   or choose its right-click menu item, and only in that tab. It changes the
   page so that just the document prints, then puts the page back the way it
-  was. Nothing is copied, stored, or sent off your device.
+  was. No page content or address is copied, stored, or sent off your
+  device.
 - **Other GitHub documents, when you print a folder.** If you choose to print
   a whole folder, the extension asks github.com for that folder's file list
   and for each Markdown file in it. These requests go only to github.com,
@@ -25,6 +26,13 @@ data. In short: **it collects nothing and sends nothing anywhere.**
   your Chrome profile and, if you have Chrome Sync turned on, syncs them
   between your own devices through your Google account. The extension's
   developer cannot see them.
+- **A last-run note for troubleshooting.** Each time you use the extension it
+  saves, with Chrome's `storage.local` API, the kind of GitHub page (for
+  example a file, a folder, or a wiki page), whether a document was found on
+  it, and the time. The Options page shows this to help tell a GitHub layout
+  change from a page with no document. It doesn't include the page's address
+  or any of its content, it stays on this device (it isn't synced), and each
+  use replaces the previous note. Removing the extension deletes it.
 
 ## What the extension does not do
 
@@ -42,7 +50,7 @@ data. In short: **it collects nothing and sends nothing anywhere.**
 | -------------------- | ---------------------------------------------------------------- |
 | `activeTab`          | Access the current GitHub tab, only after you use the extension  |
 | `scripting`          | Add the print styles and scripts to that tab                     |
-| `storage`            | Save your print settings in your Chrome profile                  |
+| `storage`            | Save your print settings and the last-run note in your profile   |
 | `declarativeContent` | Enable the toolbar button only on github.com                     |
 | `contextMenus`       | The right-click "Print this GitHub document" item                |
 

@@ -18,25 +18,28 @@ runExtensionTest("loads the real extension service worker and manifest", async (
   try {
     const worker =
       context.serviceWorkers()[0] || (await context.waitForEvent("serviceworker", { timeout: 10000 }));
-    const state = await worker.evaluate(async () => {
+    const state = await worker.evaluate(() => {
       const manifest = chrome.runtime.getManifest();
-      const rules = await new Promise((resolve) =>
-        chrome.declarativeContent.onPageChanged.getRules(undefined, resolve)
-      );
       return {
         manifestVersion: manifest.manifest_version,
         worker: manifest.background.service_worker,
         permissions: manifest.permissions,
         command: manifest.commands._execute_action.suggested_key.default,
-        ruleCount: rules.length,
       };
     });
     expect(state).toMatchObject({
       manifestVersion: 3,
       worker: "src/background.js",
       command: "Alt+Shift+P",
-      ruleCount: 1,
     });
+    // onInstalled adds the rule asynchronously, so it may not be there yet.
+    await expect
+      .poll(() =>
+        worker.evaluate(
+          () => new Promise((resolve) => chrome.declarativeContent.onPageChanged.getRules(undefined, (r) => resolve(r.length)))
+        )
+      )
+      .toBe(1);
     expect(state.permissions).toContain("activeTab");
   } finally {
     await context.close();

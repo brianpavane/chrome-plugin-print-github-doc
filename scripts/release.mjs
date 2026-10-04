@@ -1,6 +1,7 @@
-// Cuts a release: bumps the version everywhere, turns the changelog's
-// "Unreleased" entries into the new version's section, runs checks and
-// tests, builds the zip, then commits and tags. Pushing is left to you.
+// Cuts a release: bumps the version everywhere (including the version and zip
+// example in docs/PUBLISHING.md), turns the changelog's "Unreleased" entries
+// into the new version's section, runs checks and tests, builds the zip, then
+// commits and tags. Pushing is left to you.
 //
 // Usage:
 //   node scripts/release.mjs patch|minor|major|X.Y.Z [--skip-tests] [--dry-run]
@@ -77,17 +78,28 @@ write("CHANGELOG.md", changelog);
 
 if (dryRun) {
   console.log("Dry run: no files changed. Would update VERSION, manifest.json, README.md, CHANGELOG.md,");
+  console.log("docs/PUBLISHING.md,");
   console.log(`build dist/print-github-doc-${newVersion}.zip, commit, and tag v${newVersion}.`);
   process.exit(0);
 }
 
-// 5. Verify and package.
-run(process.execPath, ["scripts/check.mjs"], { stdio: "inherit" });
+// 5. Package, then put the new version and the real zip line in the
+// publishing guide.
 const pkg = buildPackage();
-console.log(`✓ ${pkg.out}`);
+const zipLine = `✓ ${pkg.out} (${pkg.count} files, ${(pkg.bytes / 1024).toFixed(1)} KB)`;
+console.log(zipLine);
+write(
+  "docs/PUBLISHING.md",
+  read("docs/PUBLISHING.md")
+    .replace(/(latest release tag \(\*\*)[^*]+(\*\*)/, `$1${newVersion}$2`)
+    .replace(/^✓ dist\/print-github-doc-\S+\.zip \(.*\)$/m, zipLine)
+);
 
-// 6. Commit and tag.
-run("git", ["add", "VERSION", "manifest.json", "README.md", "CHANGELOG.md"]);
+// 6. Verify.
+run(process.execPath, ["scripts/check.mjs"], { stdio: "inherit" });
+
+// 7. Commit and tag.
+run("git", ["add", "VERSION", "manifest.json", "README.md", "CHANGELOG.md", "docs/PUBLISHING.md"]);
 run("git", ["commit", "-m", `Release v${newVersion}`]);
 run("git", ["tag", "-a", `v${newVersion}`, "-m", `v${newVersion}`]);
 console.log(`✓ Committed and tagged v${newVersion}.`);

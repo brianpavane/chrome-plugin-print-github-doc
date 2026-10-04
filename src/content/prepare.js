@@ -13,8 +13,14 @@ GHP.prepare = async function prepare({
   wholePage = false, // fallback: print the full page, only forced light
 }) {
   const S = globalThis.GHP_SELECTORS;
+  // How long to wait for GitHub to render diagrams in a folder bundle. Tests
+  // shorten it; content scripts run in an isolated world, so pages can't.
+  const DIAGRAM_WAIT_MS = globalThis.GHP_TEST_DIAGRAM_WAIT_MS ?? 4000;
   const html = document.documentElement;
-  const initialUrl = location.href;
+  // A different path or query means GitHub navigated; a #hash change (e.g.
+  // clicking a heading link) doesn't.
+  const pageKey = () => location.pathname + location.search;
+  const initialPage = pageKey();
   const undo = [];
   const restore = () => {
     while (undo.length) {
@@ -124,7 +130,7 @@ GHP.prepare = async function prepare({
         setTimeout(() => {
           observer.disconnect();
           resolve();
-        }, 4000);
+        }, DIAGRAM_WAIT_MS);
       });
     }
     for (const el of pending) {
@@ -231,7 +237,7 @@ GHP.prepare = async function prepare({
   }
 
   function assertPageUnchanged(target) {
-    if (location.href !== initialUrl || !target.isConnected) {
+    if (pageKey() !== initialPage || !target.isConnected) {
       throw new Error("The GitHub page changed while the document was being prepared. Please try again.");
     }
   }

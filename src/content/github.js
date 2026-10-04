@@ -25,7 +25,8 @@ GHP.github = (() => {
     else if (parts[2] === "blob") kind = "blob";
     else if (parts[2] === "tree") kind = "tree";
 
-    // For display only: assumes a single-segment branch name.
+    // For display only: assumes a single-segment branch name. resolveFile()
+    // replaces it with the exact path when GitHub confirms the branch.
     const file = kind === "blob" ? parts.slice(4).join("/") : kind === "home" ? "README" : "";
 
     return {
@@ -76,6 +77,41 @@ GHP.github = (() => {
     if (info.kind === "wiki") return `${info.repo} - wiki - ${wikiTitle()}`;
     if (info.kind === "blob") return `${info.repo} - ${stripExt(baseName(info.file))}`;
     return `${info.repo} - README`;
+  }
+
+  // A blob URL can't tell a branch with a slash ("release/v2") from a
+  // folder, so pageInfo's file path is a guess. GitHub names the branch in
+  // the page's embedded data and in a folder listing; use whichever matches
+  // the current URL exactly (embedded data can be stale after in-app
+  // navigation) to get the real path.
+  function resolveFile(info, { listing = null, doc = document } = {}) {
+    if (info.kind !== "blob") return info;
+    const rest = info.parts.slice(3).join("/");
+    const name = baseName(rest);
+    const candidates = [embeddedRoute(doc)];
+    if (listing?.ref) {
+      candidates.push({ ref: listing.ref, path: listing.dir ? `${listing.dir}/${name}` : name });
+    }
+    for (const c of candidates) {
+      if (typeof c?.ref === "string" && typeof c.path === "string" && c.path && rest === `${c.ref}/${c.path}`) {
+        return { ...info, file: c.path, fileIsApproximate: false };
+      }
+    }
+    return info;
+  }
+
+  // -> { ref, path } from GitHub's embedded page data, or null.
+  function embeddedRoute(doc) {
+    for (const script of doc.querySelectorAll(S.embeddedData.join(","))) {
+      try {
+        const payload = JSON.parse(script.textContent)?.payload;
+        const route = payload?.codeViewBlobLayoutRoute || payload?.codeViewLayoutRoute;
+        if (route?.refInfo?.name) return { ref: route.refInfo.name, path: route.path };
+      } catch {
+        // Not the JSON we expect; try the next one.
+      }
+    }
+    return null;
   }
 
   // ---- folder printing ----------------------------------------------------
@@ -139,42 +175,40 @@ GHP.github = (() => {
   }
 
   // Only ever requests github.com paths, from the github.com page itself.
+  // The timeout covers reading the body too, not just the response headers.
   async function fetchJson(url, { signal, timeout = REQUEST_TIMEOUT_MS } = {}) {
     const target = new URL(url, location.href);
     if (target.origin !== location.origin) throw new Error(`Refusing to fetch ${target.href}`);
-    const timeoutController = new AbortController();
-    const combinedController = new AbortController();
-    const forwardAbort = (source) => {
-      if (!combinedController.signal.aborted) combinedController.abort(source.reason);
-    };
-    const onExternalAbort = () => forwardAbort(signal);
-    signal?.addEventListener("abort", onExternalAbort, { once: true });
-    timeoutController.signal.addEventListener("abort", () => forwardAbort(timeoutController.signal), { once: true });
-    const timer = setTimeout(() => timeoutController.abort(new Error(`Request timed out after ${timeout} ms`)), timeout);
-    let res;
+    if (signal?.aborted) throw signal.reason ?? new DOMException("Cancelled", "AbortError");
+    const controller = new AbortController();
+    const onAbort = () => controller.abort(signal.reason);
+    signal?.addEventListener("abort", onAbort, { once: true });
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort(new Error(`Request timed out after ${timeout} ms`));
+    }, timeout);
     try {
-      res = await fetch(target, {
+      const res = await fetch(target, {
         headers: { Accept: "application/json" },
         credentials: "same-origin",
-        signal: combinedController.signal,
+        signal: controller.signal,
       });
-    } catch (err) {
-      if (timeoutController.signal.aborted && !signal?.aborted) {
-        throw new Error(`GitHub took too long to respond for ${url}`);
+      if (res.url && new URL(res.url).origin !== location.origin) {
+        throw new Error(`Unexpected redirect to ${res.url}`);
       }
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
+      if (!/json/.test(res.headers.get("content-type") || "")) {
+        throw new Error(`Expected JSON from ${url}`);
+      }
+      return await res.json();
+    } catch (err) {
+      if (timedOut && !signal?.aborted) throw new Error(`GitHub took too long to respond for ${url}`);
       throw err;
     } finally {
       clearTimeout(timer);
-      signal?.removeEventListener("abort", onExternalAbort);
+      signal?.removeEventListener("abort", onAbort);
     }
-    if (res.url && new URL(res.url).origin !== location.origin) {
-      throw new Error(`Unexpected redirect to ${res.url}`);
-    }
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
-    if (!/json/.test(res.headers.get("content-type") || "")) {
-      throw new Error(`Expected JSON from ${url}`);
-    }
-    return res.json();
   }
 
   // ---- helpers -----------------------------------------------------------
@@ -212,6 +246,7 @@ GHP.github = (() => {
 
   return {
     pageInfo,
+    resolveFile,
     findContent,
     docTitle,
     pdfTitle,

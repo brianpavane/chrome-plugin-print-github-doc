@@ -327,7 +327,7 @@ Paste the "Justification" text into the box for each permission.
 | --- | --- |
 | `activeTab` | When the user clicks the toolbar button, presses the shortcut, or uses the right-click item on a github.com page, the extension needs temporary access to that one tab to prepare the document for printing. It requests no host permissions; activeTab limits access to the tab the user acted on. |
 | `scripting` | Used with activeTab to insert the extension's own print stylesheet and scripts into the current github.com tab when the user asks to print. All injected code is included in the package. |
-| `storage` | Saves the user's print settings (include header, print link URLs, expand collapsed sections, section page breaks, show options panel) with chrome.storage.sync. No other data is stored. |
+| `storage` | Saves the user's print settings (include header, print link URLs, expand collapsed sections, section page breaks, show options panel) with chrome.storage.sync, and, with chrome.storage.local, a last-run diagnostic shown on the Options page (page type, whether a document was found, and the time). No URLs, page content, or other data are stored, and nothing leaves the device. |
 | `declarativeContent` | Enables the toolbar button only on https://github.com pages, without needing host permissions to read page URLs. |
 | `contextMenus` | Adds a "Print this GitHub document" item to the right-click menu on github.com pages, as an alternative to the toolbar button. |
 

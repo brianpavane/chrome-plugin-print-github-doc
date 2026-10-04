@@ -9,6 +9,46 @@ The version number lives in two places that must match:
 
 ## [Unreleased]
 
+### Fixed
+
+- Closing the panel (Esc, ×, or Cancel) while a folder loading problem was
+  shown left the extension unresponsive on that tab until the page was
+  reloaded.
+- **Retry failed** fetched every document in the folder again; it now
+  fetches only the ones that failed. **Retry** is offered only when trying
+  again can help, and **Print** is disabled while a retry is running.
+- Errors after the print dialog closed could be hidden, because closing the
+  panel also counted as cancelling.
+- Clicking a heading link (changing only the `#` part of the address) while a
+  print was being prepared cancelled it.
+- The folder request timeout now also covers reading GitHub's response, not
+  just waiting for it to start.
+- Pressing **Enter** on a panel checkbox prints again, as it did before
+  0.5.0.
+
+### Changed
+
+- The header says **File** again for a Markdown file whenever GitHub's page
+  data or the folder listing confirms the branch name. **Path from URL**
+  appears only when the branch can't be confirmed (for example a branch name
+  containing `/`).
+- A folder printout that leaves out documents GitHub couldn't load now names
+  them in the warning on the contents page.
+
+### Privacy
+
+- The last-run diagnostic no longer stores the page address; it records only
+  the page type, whether a document was found, and the time. Addresses saved
+  by 0.5.0 are removed on update. `PRIVACY.md` now describes it.
+
+### Added
+
+- GitHub Actions workflow running the checks, the Playwright tests, and the
+  real-extension smoke test on every push and pull request.
+- Tests for closing the panel during folder recovery, retrying only failed
+  documents, cancelling while documents load, the folder-listing error
+  message, the file path label, and the diagnostic's contents.
+
 ## [0.5.0] - 2026-10-04
 
 ### Added
@@ -21,6 +61,12 @@ The version number lives in two places that must match:
 
 - Improved panel keyboard accessibility, diagram-settling responsiveness,
   branch/path labeling, browser selection for tests, and folder error messages.
+- Enter in the panel pressed only the focused button; on a checkbox it no
+  longer printed (restored in the next release).
+- The header's **File** label became **Path from URL** for every Markdown
+  file page.
+- A folder print where some documents fail can go ahead with the rest,
+  with a warning on the contents page.
 
 ### Security
 

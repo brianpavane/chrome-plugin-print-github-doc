@@ -1,6 +1,7 @@
 // Static checks that need nothing but Node:
 // - every .js/.mjs file parses
-// - manifest.json is valid and its version matches VERSION
+// - manifest.json is valid and its version matches VERSION, as do the
+//   CHANGELOG, README, and docs/PUBLISHING.md
 // - every file the manifest, background script, and options page reference exists
 // - Chrome Web Store rules: field lengths, no remote code, no host access,
 //   icon sizes, and a store justification for every permission
@@ -38,6 +39,15 @@ if (manifest && manifest.version !== version) {
 }
 const changelog = readFileSync(join(ROOT, "CHANGELOG.md"), "utf8");
 if (!changelog.includes(`## [${version}]`)) fail(`CHANGELOG.md has no "## [${version}]" section`);
+const readme = readFileSync(join(ROOT, "README.md"), "utf8");
+if (!readme.includes(`**Version:** ${version}`)) fail(`README.md doesn't show "**Version:** ${version}"`);
+const publishingGuide = readFileSync(join(ROOT, "docs/PUBLISHING.md"), "utf8");
+if (!publishingGuide.includes(`latest release tag (**${version}**`)) {
+  fail(`docs/PUBLISHING.md doesn't name ${version} as the latest release`);
+}
+if (!publishingGuide.includes(`dist/print-github-doc-${version}.zip`)) {
+  fail(`docs/PUBLISHING.md's zip example isn't print-github-doc-${version}.zip`);
+}
 
 // 3. Referenced files exist.
 const referenced = new Set();

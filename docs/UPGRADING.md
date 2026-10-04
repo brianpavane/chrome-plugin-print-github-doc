@@ -83,6 +83,20 @@ than reloading it. Removing it also clears its settings.
 The full list is in [`CHANGELOG.md`](../CHANGELOG.md). Notes that affect how
 the extension behaves after upgrading:
 
+### 0.5.0 → 0.5.1
+
+- **Fixes a stuck extension after a folder error.** In 0.5.0, closing the
+  panel while it showed a folder loading problem left the extension
+  unresponsive on that tab until you reloaded the page.
+- **"File" is back in the header** whenever the branch can be confirmed.
+  "Path from URL" now appears only for branch names containing `/` that
+  GitHub's page doesn't confirm.
+- **Retry failed** fetches only the documents that failed, and a folder
+  printout names any documents it leaves out.
+- **Enter on a panel checkbox prints** again.
+- **Privacy:** the Options page's last-run diagnostic no longer stores the
+  page address; one saved by 0.5.0 is removed when you update.
+
 ### 0.4.1 → 0.5.0
 
 - **Folder printing is more resilient.** Slow requests time out, Cancel stops
@@ -95,7 +109,12 @@ the extension behaves after upgrading:
 - The options panel has improved keyboard and screen-reader behavior. Existing
   settings and shortcuts are preserved.
 
-### 0.3.0 → next version
+### 0.4.0 → 0.4.1
+
+- Documentation only (the publishing guide). The extension itself didn't
+  change.
+
+### 0.3.0 → 0.4.0
 
 - **New name: Print Doc for GitHub.** The card on `chrome://extensions`, the
   panel, and the Options page use the new name; nothing else changes.

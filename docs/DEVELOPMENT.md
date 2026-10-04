@@ -136,9 +136,19 @@ GitHub URL with the header `Accept: application/json` returns:
 - For the repository home page, the extension requests `/tree/HEAD`, which
   resolves to the default branch.
 
+A blob URL like `/blob/release/v2/docs/a.md` doesn't say where the branch ends.
+For the header's **File** line, `resolveFile()` in `github.js` takes the
+branch from GitHub's embedded page data
+(`<script data-target="react-app.embeddedData">` →
+`payload.codeViewBlobLayoutRoute.{refInfo.name, path}`) or from the folder
+listing, and uses it only if `<ref>/<path>` equals the URL exactly (the
+embedded data can be stale after GitHub's in-app navigation). Otherwise the
+header says **Path from URL**.
+
 The requests come from the GitHub page itself, so they carry the user's login
 and work for private repositories. This isn't a documented API; if GitHub
-changes it, folder printing will show "Couldn't load the folder". The fixtures
+changes it, the panel says "Folder printing is temporarily unavailable" (or a
+folder print reports failed documents). Each request times out after 15 s. The fixtures
 in `test/fixtures/github-json.js` show the shape the code expects.
 
 ## Permissions
@@ -147,7 +157,7 @@ in `test/fixtures/github-json.js` show the shape the code expects.
 | -------------------- | --------------------------------------------------------- |
 | `activeTab`          | Access the current tab only after the user acts           |
 | `scripting`          | Inject the CSS and scripts into that tab                  |
-| `storage`            | Save settings (synced via the user's Chrome profile)      |
+| `storage`            | Save settings (synced via the user's Chrome profile) and the last-run diagnostic (local) |
 | `declarativeContent` | Enable the button only on github.com, without host access |
 | `contextMenus`       | The right-click "Print this GitHub document" item         |
 
@@ -164,8 +174,9 @@ npm test
 ```
 
 By default Playwright uses installed Google Chrome. Set
-`PLAYWRIGHT_BROWSER=chromium` to use Playwright's bundled Chromium instead,
-or set `PLAYWRIGHT_CHANNEL` to another installed browser channel.
+`PLAYWRIGHT_BROWSER=chromium` to use Playwright's bundled Chromium instead
+(run `npx playwright install chromium` once), or set `PLAYWRIGHT_CHANNEL` to
+another installed browser channel, such as `chrome-beta`.
 
 The real-extension smoke test is opt-in because it launches an unpacked
 extension in a persistent browser context:
@@ -179,22 +190,34 @@ with every `github.com` request answered from `test/fixtures/`, so they run
 offline and don't depend on GitHub. They inject the same scripts, in the same
 order, as `background.js`, replace `chrome.storage` with a stand-in, and
 replace `window.print()` with a function that records what the page looks
-like in print media at that moment. They cover:
+like in print media at that moment. They also set
+`GHP_TEST_DIAGRAM_WAIT_MS` so folder prints wait 250 ms, not 4 s, for diagrams
+GitHub's (absent) script would render; the real extension can't be affected,
+because content scripts run in an isolated world. They cover:
 
-- only the document visible; light theme; header contents; PDF file name
+- only the document visible; light theme; header contents (including
+  **File** vs. **Path from URL**); PDF file name; the diagnostic stores no URL
 - `<details>` expansion, link URLs on/off, header off, section page breaks
 - the light `<picture>` variant with a dark OS; inverting dark diagrams
 - the page being exactly restored afterwards
 - the panel: per-print settings, remembering settings, Escape to cancel,
-  triggering again to print
+  Enter on a checkbox, triggering again to print
 - folder printing: order (README first, natural sort), contents, headers,
-  diagram source fallback, partial failures, retry, and the error path
+  diagram source fallback, partial failures (and the warning naming them),
+  retrying only failed documents, every document failing, closing the panel
+  by Esc / × / Cancel during recovery (the extension must work again
+  afterwards), cancelling while loading, and the folder-listing error
 - GitHub JSON contract failures and request timeouts
 - the "no document" fallback, with and without the panel
 
-If `npm test` can't find Chrome, install Google Chrome, or run
-`npx playwright install chromium` and remove `channel: "chrome"` from
-`playwright.config.js`.
+If `npm test` can't find Chrome, install Google Chrome, or use
+`PLAYWRIGHT_BROWSER=chromium` as above.
+
+### Continuous integration
+
+`.github/workflows/test.yml` runs `npm test` and the real-extension smoke
+test on every push to `main` and every pull request, using Playwright's
+bundled Chromium on Ubuntu (`PLAYWRIGHT_BROWSER=chromium`).
 
 The opt-in smoke test covers loading the unpacked manifest, service worker,
 permissions, command, and declarative-content rule. The tests still cannot
@@ -275,8 +298,13 @@ The script:
 3. Writes the new version to `VERSION`, `manifest.json`, and the README.
 4. Moves the `[Unreleased]` notes into a new dated section in `CHANGELOG.md`
    and updates the comparison links.
-5. Runs the static checks and builds `dist/print-github-doc-<version>.zip`.
-6. Commits (`Release vX.Y.Z`) and creates the tag `vX.Y.Z`.
+5. Builds `dist/print-github-doc-<version>.zip`, then writes the new version
+   and the zip's real file count and size into `docs/PUBLISHING.md`.
+6. Runs the static checks, which fail if `VERSION`, `manifest.json`, the
+   README, the changelog, or `docs/PUBLISHING.md` disagree on the version.
+7. Commits (`Release vX.Y.Z`) and creates the tag `vX.Y.Z`.
+
+No version number needs editing by hand.
 
 Then push it yourself:
 

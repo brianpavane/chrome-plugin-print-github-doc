@@ -1,0 +1,28 @@
+# Runs the static checks, the offline Playwright tests, and the real-extension
+# smoke test on every push and pull request. Uses Playwright's bundled
+# Chromium, since CI runners don't have Google Chrome.
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSER: chromium
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - name: Real-extension smoke test
+        run: npx playwright test test/extension.spec.js --workers=1
+        env:
+          GHP_EXTENSION_TEST: "1"

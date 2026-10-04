@@ -150,7 +150,8 @@ document.
 2. Start the extension. After a moment, the panel shows
    **Print all N Markdown files in docs/ as one document**. Tick it.
 3. Click **Print folder**. The panel shows "Loading documents… 3 of 22" while
-   it gathers them. Then the print window opens.
+   it gathers them. Then the print window opens. Click **Cancel** (or press
+   **Esc**) at any time to stop.
 
 The printout has a contents page listing every document, then each document
 starting on a new page with its file name and address at the top. Files are
@@ -292,10 +293,33 @@ extension, pages that were already open need a reload.
 - Folder printing relies on how GitHub's website works internally, which can
   change. If it stops appearing everywhere, please open an issue.
 
-**"Couldn't load the folder: …"**
-One of the files couldn't be fetched from GitHub. Check you're still signed in
-to GitHub (for private repositories), reload the page, and try again. Click
-**Cancel** to close the message.
+**"N documents failed (…)" or "Couldn't load the folder: …"**
+Some or all of the files couldn't be fetched from GitHub (each request gives
+up after 15 seconds). Check you're still signed in to GitHub (for private
+repositories). Then:
+- **Retry failed** (or **Retry**) tries those files again; files that already
+  loaded aren't fetched again.
+- **Print N loaded** prints the files that did load. The contents page names
+  the ones left out.
+- **Cancel** or **Esc** closes the message.
+
+**"Folder printing is temporarily unavailable…"**
+GitHub didn't answer the request for the folder's file list the way the
+extension expects. Reload the page and try again; you can still print the
+single document. If it keeps happening, GitHub may have changed how its
+website works. Please open an issue.
+
+**The header says "Path from URL" instead of "File".**
+The extension couldn't confirm which part of the address is the branch name,
+which happens with branch names containing `/` (like `release/v2`). The path
+shown may then include part of the branch name. Reloading the page usually
+lets the extension confirm it.
+
+**Checking what the extension last saw.**
+The Options page shows the installed version and, under **Diagnostics**, the
+last time you used the extension: the kind of page and whether a document was
+found. "Document not found" on a normal Markdown page suggests GitHub changed
+its layout; please open an issue.
 
 **The panel is in the way / I never change the settings.**
 Turn off **Show the options panel** in the extension's Options. Printing then

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { openPage, trigger, waitForPrint, panel, leftovers, NO_DOC_URL } from "./helpers.js";
+import { openPage, trigger, waitForPrint, panel, leftovers, idle, NO_DOC_URL } from "./helpers.js";
 
 const NO_PANEL = { showPanel: false };
 const WHITE = "rgb(255, 255, 255)";
@@ -27,6 +27,53 @@ test.describe("single document", () => {
     expect(snap.printHeader).toContain("Repository: test-owner/test-repo");
     expect(snap.printHeader).toContain("Path from URL: docs/2-two.md");
     expect(snap.printHeader).toContain("URL: https://github.com/test-owner/test-repo/blob/main/docs/2-two.md");
+  });
+
+  test("labels the file path exactly when GitHub's page data confirms the branch", async ({ page }) => {
+    await openPage(page, { stored: NO_PANEL });
+    await page.evaluate(() => {
+      const script = document.createElement("script");
+      script.type = "application/json";
+      script.dataset.target = "react-app.embeddedData";
+      script.textContent = JSON.stringify({
+        payload: { codeViewBlobLayoutRoute: { refInfo: { name: "main" }, path: "docs/2-two.md" } },
+      });
+      document.body.append(script);
+    });
+    await trigger(page);
+    expect((await waitForPrint(page)).printHeader).toContain("File: docs/2-two.md");
+  });
+
+  test("ignores page data for a different file (stale after in-app navigation)", async ({ page }) => {
+    await openPage(page, { stored: NO_PANEL });
+    await page.evaluate(() => {
+      const script = document.createElement("script");
+      script.type = "application/json";
+      script.dataset.target = "react-app.embeddedData";
+      script.textContent = JSON.stringify({
+        payload: { codeViewBlobLayoutRoute: { refInfo: { name: "main" }, path: "docs/README.md" } },
+      });
+      document.body.append(script);
+    });
+    await trigger(page);
+    expect((await waitForPrint(page)).printHeader).toContain("Path from URL: docs/2-two.md");
+  });
+
+  test("labels the file path exactly when the folder listing confirms the branch", async ({ page }) => {
+    await openPage(page);
+    await trigger(page);
+    await expect(panel(page)).toContainText("Print all 3 Markdown files");
+    await panel(page).getByRole("button", { name: "Print", exact: true }).click();
+    expect((await waitForPrint(page)).printHeader).toContain("File: docs/2-two.md");
+  });
+
+  test("records a last-run diagnostic without the page URL", async ({ page }) => {
+    await openPage(page, { stored: NO_PANEL });
+    await trigger(page);
+    await waitForPrint(page);
+    const d = await page.evaluate(() => window.__local.ghpLastDiagnostic);
+    expect(d).toMatchObject({ pageType: "blob", documentFound: true });
+    expect(Object.keys(d).sort()).toEqual(["at", "documentFound", "pageType"]);
   });
 
   test("sets a short PDF file name and restores the title", async ({ page }) => {
@@ -138,6 +185,14 @@ test.describe("options panel", () => {
     expect(await leftovers(page)).toEqual(before);
   });
 
+  test("Enter on a checkbox prints", async ({ page }) => {
+    await openPage(page);
+    await trigger(page);
+    await panel(page).getByRole("checkbox").first().focus();
+    await page.keyboard.press("Enter");
+    expect((await waitForPrint(page)).colorMode).toBe("light");
+  });
+
   test("pressing the shortcut again while the panel is open prints", async ({ page }) => {
     await openPage(page);
     await trigger(page);
@@ -191,6 +246,96 @@ test.describe("folder printing", () => {
     await panel(page).getByRole("button", { name: "Print 2 loaded" }).click();
     const snap = await waitForPrint(page);
     expect(snap.bundleDocs).toHaveLength(2);
+    expect(snap.bundleWarning).toContain("docs/10-ten.md");
+  });
+
+  test("Retry failed fetches only the documents that failed", async ({ page }) => {
+    await openPage(page);
+    const requests = {};
+    page.on("request", (req) => {
+      const path = new URL(req.url()).pathname;
+      if (path.includes("/blob/")) requests[path] = (requests[path] || 0) + 1;
+    });
+    let failNext = true;
+    await page.route("**/blob/main/docs/10-ten.md", (route) => {
+      if (!failNext) return route.fallback();
+      failNext = false;
+      return route.fulfill({ status: 500, body: "boom" });
+    });
+    await trigger(page);
+    await panel(page).getByText("Print all 3 Markdown files").click();
+    await panel(page).getByRole("button", { name: "Print folder" }).click();
+    await expect(panel(page)).toContainText("1 document failed");
+    await panel(page).getByRole("button", { name: "Retry failed" }).click();
+    const snap = await waitForPrint(page);
+    expect(snap.bundleDocs).toHaveLength(3);
+    expect(snap.bundleWarning).toBeNull();
+    expect(requests).toEqual({
+      "/test-owner/test-repo/blob/main/docs/README.md": 1,
+      "/test-owner/test-repo/blob/main/docs/2-two.md": 1,
+      "/test-owner/test-repo/blob/main/docs/10-ten.md": 2,
+    });
+  });
+
+  test("offers Retry when every document fails, and closing the message ends the run", async ({ page }) => {
+    await openPage(page);
+    await page.route("**/blob/main/docs/*.md", (route) => route.fulfill({ status: 500, body: "boom" }));
+    await trigger(page);
+    await panel(page).getByText("Print all 3 Markdown files").click();
+    await panel(page).getByRole("button", { name: "Print folder" }).click();
+    await expect(panel(page)).toContainText("None of the 3 documents could be loaded");
+    await expect(panel(page).getByRole("button", { name: "Retry" })).toBeVisible();
+    await expect(panel(page).getByRole("button", { name: "Print folder" })).toBeDisabled();
+    await page.keyboard.press("Escape");
+    await expect(panel(page)).toHaveCount(0);
+    await expect.poll(() => idle(page)).toBe(true);
+  });
+
+  for (const how of ["Escape", "Close button", "Cancel button"]) {
+    test(`${how} while a failure is shown ends the run, so the extension works again`, async ({ page }) => {
+      await openPage(page);
+      await page.route("**/blob/main/docs/10-ten.md", (route) => route.fulfill({ status: 500, body: "boom" }));
+      await trigger(page);
+      await panel(page).getByText("Print all 3 Markdown files").click();
+      await panel(page).getByRole("button", { name: "Print folder" }).click();
+      await expect(panel(page)).toContainText("1 document failed");
+      if (how === "Escape") await page.keyboard.press("Escape");
+      else await panel(page).getByRole("button", { name: how === "Cancel button" ? "Cancel" : "Close" }).click();
+      await expect(panel(page)).toHaveCount(0);
+      await expect.poll(() => idle(page)).toBe(true);
+      expect(await page.evaluate(() => window.__prints.length)).toBe(0);
+      expect((await leftovers(page)).elements).toBe(0);
+
+      await trigger(page); // works again
+      await expect(panel(page)).toBeVisible();
+    });
+  }
+
+  test("Cancel while documents load stops the requests and doesn't print", async ({ page }) => {
+    await openPage(page);
+    let aborted = false;
+    await page.route("**/blob/main/docs/10-ten.md", () => {}); // never answers
+    page.on("requestfailed", (req) => {
+      if (req.url().endsWith("/10-ten.md")) aborted = true;
+    });
+    await trigger(page);
+    await panel(page).getByText("Print all 3 Markdown files").click();
+    await panel(page).getByRole("button", { name: "Print folder" }).click();
+    await expect(panel(page)).toContainText("Loading documents… 2 of 3");
+    await panel(page).getByRole("button", { name: "Cancel" }).click();
+    await expect(panel(page)).toHaveCount(0);
+    await expect.poll(() => idle(page)).toBe(true);
+    await expect.poll(() => aborted).toBe(true);
+    expect(await page.evaluate(() => window.__prints.length)).toBe(0);
+  });
+
+  test("explains when the folder listing can't be read", async ({ page }) => {
+    await openPage(page);
+    await page.route("**/tree/main/docs", (route) => route.fulfill({ status: 500, body: "boom" }));
+    await trigger(page);
+    await expect(panel(page)).toContainText("Folder printing is temporarily unavailable");
+    await panel(page).getByRole("button", { name: "Print", exact: true }).click();
+    expect((await waitForPrint(page)).visible.article).toBe(true);
   });
 });
 
