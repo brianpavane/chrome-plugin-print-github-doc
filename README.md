@@ -58,8 +58,10 @@ profile.
 
 ## Documentation
 
-- [Install and use, step by step](docs/INSTALL.md), including updating,
-  removing, and troubleshooting
+- [Install and use, step by step](docs/INSTALL.md), including removing and
+  troubleshooting
+- [Upgrading](docs/UPGRADING.md): how to update to a new version (Chrome does
+  not do it automatically), what is kept, and what changed
 - [Development](docs/DEVELOPMENT.md): how it works, permissions, testing, and
   releasing a new version
 - [Changelog](CHANGELOG.md)

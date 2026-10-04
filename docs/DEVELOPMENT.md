@@ -29,6 +29,7 @@ src/options/             Options page (options.html, options.js)
 icons/                   Toolbar and store icons (16, 32, 48, 128 px)
 scripts/make-icons.mjs   Generates icons/
 docs/INSTALL.md          Step-by-step install and usage guide
+docs/UPGRADING.md        How to upgrade, plus per-version upgrade notes
 docs/DEVELOPMENT.md      This file
 ```
 
@@ -134,6 +135,9 @@ number for fixes, minor for new features, major for breaking changes.
 2. In `CHANGELOG.md`, rename `[Unreleased]` entries into a new
    `## [x.y.z] - YYYY-MM-DD` section, leave an empty `[Unreleased]` heading,
    and update the comparison links at the bottom.
+   If the release changes behavior users will notice (a default, a
+   shortcut, a permission), add a section to `docs/UPGRADING.md` under
+   "What's new in each version".
 3. Commit, then tag and push:
 
    ```sh

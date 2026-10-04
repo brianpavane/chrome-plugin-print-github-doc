@@ -173,11 +173,10 @@ empty; set one here.
 3. On the **Print GitHub Doc** card, click the circular **reload** arrow.
 4. Reload any GitHub tabs you already had open.
 
-Chrome does **not** notice changed files on its own while it's running, so
-step 3 matters. Quitting and reopening Chrome also picks up the new files, but
-the reload arrow is quicker and certain.
-
-Your settings and custom shortcut are kept when you update.
+Chrome does **not** update this extension by itself, even when the files
+change; step 3 is what makes it use them. Your settings and custom shortcut
+are kept. The full guide, including what changed in each version and how to go
+back to an older one, is in [UPGRADING.md](UPGRADING.md).
 
 To see which version you have, look at the number on the card, or the
 [`VERSION`](../VERSION) file. What changed in each version is in

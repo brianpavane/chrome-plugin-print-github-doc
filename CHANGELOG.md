@@ -20,8 +20,9 @@ The version number lives in two places that must match:
 
 - Options page shows the current keyboard shortcut and a button that opens
   Chrome's shortcuts page to change it.
-- Install guide: how to change the shortcut, and why updates need the reload
-  button.
+- Install guide: how to change the shortcut.
+- `docs/UPGRADING.md`: how to upgrade (Chrome does not auto-update unpacked
+  extensions), what is kept, per-version notes, and rolling back.
 
 ## [0.1.0] - 2026-10-03
 
