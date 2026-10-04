@@ -76,6 +76,10 @@ export async function openPage(page, { url = DOC_URL, fixture = "doc.html", stor
         bundleDocs: [...document.querySelectorAll(".ghp-doc-header")].map((e) => e.textContent),
         bundleContents: [...document.querySelectorAll(".ghp-contents li")].map((e) => e.textContent),
         mermaidSourceShown: shown(".ghp-show-source .render-plaintext-hidden"),
+        unsafeInBundle: document.querySelectorAll(
+          ".ghp-bundle script, .ghp-bundle iframe, .ghp-bundle [onerror], .ghp-bundle [onclick], .ghp-bundle a[href^='javascript:']"
+        ).length,
+        bundleImages: document.querySelectorAll(".ghp-bundle img[src]").length,
       };
     };
   }, stored);

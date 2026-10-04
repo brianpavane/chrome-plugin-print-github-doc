@@ -30,7 +30,7 @@
 
     if (saved.showPanel) {
       folderPromise = G.github.listMarkdown(info).catch((err) => {
-        console.warn("Print GitHub Doc: couldn't list folder", err);
+        console.warn("Print Doc for GitHub: couldn't list folder", err);
         return null;
       });
       panel = G.panel.open({ options: saved, hasDocument: !!root, folderPromise, info, dark });
@@ -40,7 +40,7 @@
       choice = { action: "print", options: saved, folder: false };
     } else {
       const ok = confirm(
-        "Print GitHub Doc: no rendered document was found on this page.\n\n" +
+        "Print Doc for GitHub: no rendered document was found on this page.\n\n" +
           "Print the whole page in light colors instead?"
       );
       choice = { action: ok ? "whole" : "cancel", options: saved, folder: false };
@@ -59,7 +59,7 @@
           panel?.status(`Loading documents… ${done} of ${total}`)
         );
       } catch (err) {
-        console.error("Print GitHub Doc:", err);
+        console.error("Print Doc for GitHub:", err);
         panel?.status(`Couldn't load the folder: ${err.message}`, { error: true });
         return; // leave the panel open so the message can be read
       }
@@ -82,8 +82,8 @@
       session.restore();
     }
   } catch (err) {
-    console.error("Print GitHub Doc:", err);
-    alert(`Print GitHub Doc: something went wrong.\n\n${err.message}`);
+    console.error("Print Doc for GitHub:", err);
+    alert(`Print Doc for GitHub: something went wrong.\n\n${err.message}`);
   } finally {
     G.active = null;
     // Close the panel unless it's showing an error for the user to read.

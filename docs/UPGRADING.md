@@ -1,15 +1,15 @@
-# Upgrading Print GitHub Doc
+# Upgrading Print Doc for GitHub
 
 How to move to a new version of the extension, what happens to your settings,
 and what changed between versions.
 
 ## The one thing to know
 
-**Chrome never updates this extension on its own.**
+**Chrome never updates an unpacked copy of this extension on its own.**
 
-Extensions from the Chrome Web Store update automatically. This one is loaded
-from a folder on your computer ("unpacked"), so Chrome only reads the files
-when it starts or when you tell it to reload. If the files in the folder
+If you installed it from the Chrome Web Store, it updates automatically and
+you can skip this guide. This page is for a copy loaded from a folder on
+your computer ("unpacked"). Chrome only reads those files when it starts or when you tell it to reload. If the files in the folder
 change while Chrome is open, Chrome keeps running the old version until you
 reload it.
 
@@ -51,7 +51,7 @@ Pick the way you got the extension in the first place:
 ### Step 2: Reload the extension in Chrome
 
 1. Type `chrome://extensions` in the address bar and press **Enter**.
-2. Find the **Print GitHub Doc** card.
+2. Find the **Print Doc for GitHub** card.
 3. Click the circular **reload** arrow (↻) on the card.
 
 If the card shows a red **Errors** button after reloading, see
@@ -64,7 +64,7 @@ Reload any GitHub tabs that were open before you upgraded (press
 
 ### Step 4: Check the version
 
-On `chrome://extensions`, the Print GitHub Doc card shows the version number
+On `chrome://extensions`, the Print Doc for GitHub card shows the version number
 (for example `0.2.0`). It should match the [`VERSION`](../VERSION) file in the
 folder.
 
@@ -82,6 +82,16 @@ than reloading it. Removing it also clears its settings.
 
 The full list is in [`CHANGELOG.md`](../CHANGELOG.md). Notes that affect how
 the extension behaves after upgrading:
+
+### 0.3.0 → next version
+
+- **New name: Print Doc for GitHub.** The card on `chrome://extensions`, the
+  panel, and the Options page use the new name; nothing else changes.
+- **Chrome 102 or newer** is required.
+- **Store and unpacked copies are separate.** Once the extension is on the
+  Chrome Web Store, installing it from there gives you a second, separate
+  extension. Remove the unpacked card, and re-apply your Options settings in
+  the store copy (they don't carry over).
 
 ### 0.2.0 → 0.3.0
 

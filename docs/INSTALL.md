@@ -1,4 +1,4 @@
-# Install and use Print GitHub Doc, step by step
+# Install and use Print Doc for GitHub, step by step
 
 This guide assumes you've never added an extension to Chrome by hand. It takes
 about five minutes. You don't need to install any other software: this folder
@@ -85,7 +85,7 @@ and **Update**.
    Windows: **Select Folder**). Don't open `manifest.json` itself; choose the
    folder.
 
-A card called **Print GitHub Doc** now appears on the extensions page. If you
+A card called **Print Doc for GitHub** now appears on the extensions page. If you
 see a red error instead, see [Troubleshooting](#troubleshooting).
 
 ## Step 5: Pin the button to your toolbar
@@ -94,7 +94,7 @@ Chrome hides new extension buttons by default.
 
 1. At the top right of Chrome, next to the address bar, click the **puzzle
    piece** icon (Extensions).
-2. Find **Print GitHub Doc** in the list and click the **pin** icon next to it.
+2. Find **Print Doc for GitHub** in the list and click the **pin** icon next to it.
 
 A small icon (a white page on a dark square) now sits in your toolbar.
 
@@ -118,7 +118,7 @@ working either way.
    - press **Alt+Shift+P** (on a Mac: **Option+Shift+P**),
    - right-click anywhere on the page and choose
      **Print this GitHub document**.
-3. A small **Print GitHub Doc** panel appears in the top-right corner of the
+3. A small **Print Doc for GitHub** panel appears in the top-right corner of the
    page. It shows the settings for this print (see
    [The options panel](#the-options-panel)). Change any you like, then click
    **Print** (or press **Enter**). To back out, click **Cancel** or press
@@ -199,7 +199,7 @@ Each tick box applies to this print only, unless you also tick
 To change the defaults:
 
 1. Right-click the extension's toolbar button and choose **Options**.
-   (Or on `chrome://extensions`, click **Details** on the Print GitHub Doc card,
+   (Or on `chrome://extensions`, click **Details** on the Print Doc for GitHub card,
    then **Extension options**.)
 2. Tick or untick:
    - **Show the options panel:** on by default. Turn it off to skip the panel
@@ -220,7 +220,7 @@ own shortcuts page, not inside the extension:
 1. Open the extension's **Options** (see above). It shows the current shortcut
    and a **Change shortcut…** button. Click it.
    (Or type `chrome://extensions/shortcuts` in the address bar.)
-2. Find **Print GitHub Doc** and click the **pencil** icon next to the
+2. Find **Print Doc for GitHub** and click the **pencil** icon next to the
    shortcut box.
 3. Press the keys you want, for example **Ctrl+Shift+L**.
    Chrome requires **Ctrl** or **Alt** (Mac: **Command**, **Ctrl**, or
@@ -239,7 +239,7 @@ empty; set one here.
      existing folder with the new files. Keep the folder in the same place.
    - **git:** run `git pull` in the folder.
 2. Go to `chrome://extensions`.
-3. On the **Print GitHub Doc** card, click the circular **reload** arrow.
+3. On the **Print Doc for GitHub** card, click the circular **reload** arrow.
 4. Reload any GitHub tabs you already had open.
 
 Chrome does **not** update this extension by itself, even when the files
@@ -254,7 +254,7 @@ To see which version you have, look at the number on the card, or the
 ## Removing it
 
 1. Go to `chrome://extensions`.
-2. On the **Print GitHub Doc** card, click **Remove**, then confirm.
+2. On the **Print Doc for GitHub** card, click **Remove**, then confirm.
 3. You can now delete the folder.
 
 ---

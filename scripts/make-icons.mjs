@@ -1,5 +1,8 @@
 // Generates icons/icon{16,32,48,128}.png: a white page with text lines on a
 // dark rounded square. Run: node scripts/make-icons.mjs
+//
+// The 128 px icon follows the Chrome Web Store guideline: 96x96 artwork
+// centered in 16 px of transparent padding. Toolbar sizes use the full square.
 import { writeFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 
@@ -29,7 +32,11 @@ function inRoundRect(x, y, x0, y0, x1, y1, r) {
   return (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
 }
 
+const PADDING = { 128: 16 };
+
 function render(size) {
+  const pad = (PADDING[size] || 0) / size;
+  const at = (u, v) => shapeAt((u - pad) / (1 - 2 * pad), (v - pad) / (1 - 2 * pad));
   const rows = [];
   for (let y = 0; y < size; y++) {
     const row = Buffer.alloc(1 + size * 4); // filter byte + RGBA
@@ -37,7 +44,7 @@ function render(size) {
       let r = 0, g = 0, b = 0, a = 0;
       for (let sy = 0; sy < SS; sy++) {
         for (let sx = 0; sx < SS; sx++) {
-          const c = shapeAt((x + (sx + 0.5) / SS) / size, (y + (sy + 0.5) / SS) / size);
+          const c = at((x + (sx + 0.5) / SS) / size, (y + (sy + 0.5) / SS) / size);
           if (c) { r += c[0]; g += c[1]; b += c[2]; a++; }
         }
       }

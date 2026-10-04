@@ -11,6 +11,9 @@ globalThis.GHP = globalThis.GHP || {};
 GHP.github = (() => {
   const S = globalThis.GHP_SELECTORS;
   const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i;
+  // Folder printing fetches one page per file; cap it so a huge folder
+  // can't send hundreds of requests to GitHub.
+  const MAX_FOLDER_FILES = 100;
 
   function pageInfo(loc = location) {
     const parts = loc.pathname.split("/").filter(Boolean).map(safeDecode);
@@ -99,12 +102,13 @@ GHP.github = (() => {
     const route = json?.payload?.codeViewTreeRoute || json?.payload?.codeViewRepoRoute;
     const items = route?.tree?.items;
     const ref = route?.refInfo?.name;
-    if (!Array.isArray(items) || !ref) return null;
+    if (!Array.isArray(items) || typeof ref !== "string" || !isSafePath(ref)) return null;
 
-    const dir = route.path && route.path !== "/" ? route.path : "";
+    const dir = typeof route.path === "string" && route.path !== "/" ? route.path : "";
     const base = `/${encodeURIComponent(info.owner)}/${encodeURIComponent(info.repo)}/blob/`;
     const files = items
-      .filter((i) => i.contentType === "file" && MARKDOWN.test(i.name))
+      .filter((i) => i.contentType === "file" && isSafeName(i.name) && isSafePath(i.path))
+      .filter((i) => MARKDOWN.test(i.name))
       .sort(compareFiles)
       .map((i) => ({
         name: i.name,
@@ -132,11 +136,17 @@ GHP.github = (() => {
     return html;
   }
 
+  // Only ever requests github.com paths, from the github.com page itself.
   async function fetchJson(url) {
-    const res = await fetch(url, {
+    const target = new URL(url, location.href);
+    if (target.origin !== location.origin) throw new Error(`Refusing to fetch ${target.href}`);
+    const res = await fetch(target, {
       headers: { Accept: "application/json" },
       credentials: "same-origin",
     });
+    if (res.url && new URL(res.url).origin !== location.origin) {
+      throw new Error(`Unexpected redirect to ${res.url}`);
+    }
     if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${url}`);
     if (!/json/.test(res.headers.get("content-type") || "")) {
       throw new Error(`Expected JSON from ${url}`);
@@ -145,6 +155,21 @@ GHP.github = (() => {
   }
 
   // ---- helpers -----------------------------------------------------------
+
+  // Names and paths come from GitHub's JSON; reject anything that could
+  // step outside the repository when turned into a URL.
+  function isSafeName(name) {
+    return typeof name === "string" && name !== "" && name !== "." && name !== ".." && !/[\/\\]/.test(name);
+  }
+
+  function isSafePath(path) {
+    return (
+      typeof path === "string" &&
+      path !== "" &&
+      path.split("/").every((seg) => seg !== "" && seg !== "." && seg !== "..") &&
+      !path.includes("\\")
+    );
+  }
 
   function baseName(path) {
     return (path || "").split("/").filter(Boolean).pop() || "";
@@ -172,5 +197,6 @@ GHP.github = (() => {
     fetchRendered,
     compareFiles,
     baseName,
+    MAX_FOLDER_FILES,
   };
 })();

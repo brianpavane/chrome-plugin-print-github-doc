@@ -1,9 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Print GitHub Doc",
+  "name": "Print Doc for GitHub",
+  "short_name": "Print Doc",
   "version": "0.3.0",
   "description": "Cleanly print or save to PDF a GitHub markdown document, README, or wiki page.",
+  "minimum_chrome_version": "102",
   "permissions": ["activeTab", "scripting", "storage", "declarativeContent", "contextMenus"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+  },
   "background": {
     "service_worker": "src/background.js"
   },

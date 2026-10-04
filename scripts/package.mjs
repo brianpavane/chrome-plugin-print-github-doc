@@ -12,7 +12,8 @@ const INCLUDE = ["manifest.json", "src", "icons"];
 export function buildPackage() {
   const version = readFileSync(join(ROOT, "VERSION"), "utf8").trim();
   const files = INCLUDE.flatMap((p) => walk(join(ROOT, p)))
-    .filter((f) => !f.endsWith(".DS_Store"))
+    // No dotfiles (.DS_Store, editor swap files) in the store upload.
+    .filter((f) => !relative(ROOT, f).split(sep).some((part) => part.startsWith(".")))
     .sort();
   const zip = createZip(
     files.map((f) => ({ name: relative(ROOT, f).split(sep).join("/"), data: readFileSync(f) }))

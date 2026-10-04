@@ -1,4 +1,4 @@
-# Print GitHub Doc
+# Print Doc for GitHub
 
 A Chrome extension that cleanly prints a GitHub document, or saves it as a PDF.
 
@@ -71,7 +71,7 @@ The extension only runs when you use it (button, shortcut, or right-click) on
 a github.com page, and only on that tab. It collects nothing and sends nothing
 anywhere. The only network requests it makes are to github.com itself, to
 fetch the other documents when you print a whole folder. Your settings are
-stored in your Chrome profile.
+stored in your Chrome profile. See the full [privacy policy](PRIVACY.md).
 
 ## Documentation
 
@@ -81,6 +81,9 @@ stored in your Chrome profile.
   not do it automatically), what is kept, and what changed
 - [Development](docs/DEVELOPMENT.md): how it works, permissions, testing, and
   releasing a new version
+- [Publishing to the Chrome Web Store](docs/PUBLISHING.md): developer
+  account, listing text, review answers, and shipping updates
+- [Privacy policy](PRIVACY.md)
 - [Changelog](CHANGELOG.md)
 
 ## Requirements
@@ -92,3 +95,9 @@ is in this repository.
 
 **To work on the code:** Node.js 20+ and `npm install`, which adds the test
 runner. See [Development](docs/DEVELOPMENT.md#requirements).
+
+---
+
+Print Doc for GitHub is an independent project and is not affiliated with,
+endorsed by, or sponsored by GitHub, Inc. GitHub is a trademark of GitHub,
+Inc.

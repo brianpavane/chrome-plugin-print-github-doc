@@ -20,7 +20,7 @@ GHP.prepare = async function prepare({
       try {
         undo.pop()();
       } catch (err) {
-        console.error("Print GitHub Doc: restore failed", err);
+        console.error("Print Doc for GitHub: restore failed", err);
       }
     }
   };
@@ -144,12 +144,13 @@ GHP.prepare = async function prepare({
       // From the repository home page GitHub resolves HEAD to a commit id.
       if (/^[0-9a-f]{40}$/.test(listing.ref)) addMeta(header, "Commit", listing.ref.slice(0, 7));
       else addMeta(header, "Branch", listing.ref);
+      addMeta(header, "URL", new URL(GHP.github.folderUrl(info), location.href).href);
     } else {
       title.textContent = GHP.github.docTitle(info, el);
       addMeta(header, "Repository", info.repoPath);
       if (info.file) addMeta(header, "File", info.file);
+      addMeta(header, "URL", info.url);
     }
-    addMeta(header, "URL", info.url);
 
     el.prepend(header);
     undo.push(() => header.remove());

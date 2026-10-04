@@ -172,6 +172,7 @@ test.describe("folder printing", () => {
     ]);
     expect(snap.printHeader).toContain("Folder: docs");
     expect(snap.printHeader).toContain("Branch: main");
+    expect(snap.printHeader).toContain("URL: https://github.com/test-owner/test-repo/tree/main/docs");
     // GitHub's script isn't on the test page, so the diagram falls back to source.
     expect(snap.mermaidSourceShown).toBe(true);
 
@@ -190,6 +191,84 @@ test.describe("folder printing", () => {
     expect(await page.evaluate(() => window.__prints.length)).toBe(0);
     await panel(page).getByRole("button", { name: "Cancel" }).click();
     await expect(panel(page)).toHaveCount(0);
+  });
+});
+
+test.describe("folder printing safety", () => {
+  test("strips scripts and event handlers from fetched documents", async ({ page }) => {
+    await openPage(page);
+    const evil =
+      `<article class="markdown-body"><h1>Evil</h1>` +
+      `<img src="https://github.com/x.png" onerror="window.__pwned = 1">` +
+      `<script>window.__pwned = 2</script>` +
+      `<iframe srcdoc="<script>parent.__pwned = 3</script>"></iframe>` +
+      `<a href=" javascript:window.__pwned = 4">click</a>` +
+      `<p onclick="window.__pwned = 5">text</p></article>`;
+    await page.route("**/blob/main/docs/2-two.md", (route) =>
+      (route.request().headers().accept || "").includes("application/json")
+        ? route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ payload: { codeViewBlobRoute: { richText: evil } } }),
+          })
+        : route.fallback()
+    );
+    await trigger(page);
+    await panel(page).getByText("Print all 3 Markdown files").click();
+    await panel(page).getByRole("button", { name: "Print folder" }).click();
+    const snap = await waitForPrint(page);
+    expect(snap.unsafeInBundle).toBe(0);
+    expect(snap.bundleImages).toBe(1); // the image itself is kept
+    expect(await page.evaluate(() => window.__pwned)).toBeUndefined();
+  });
+
+  test("ignores entries whose paths leave the folder", async ({ page }) => {
+    await openPage(page);
+    await page.route("**/tree/main/docs", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          payload: {
+            codeViewTreeRoute: {
+              path: "docs",
+              refInfo: { name: "main" },
+              tree: {
+                items: [
+                  { name: "README.md", path: "docs/README.md", contentType: "file" },
+                  { name: "2-two.md", path: "docs/2-two.md", contentType: "file" },
+                  { name: "x.md", path: "docs/../../../other/x.md", contentType: "file" },
+                  { name: "../y.md", path: "docs/y.md", contentType: "file" },
+                ],
+              },
+            },
+          },
+        }),
+      })
+    );
+    await trigger(page);
+    await expect(panel(page)).toContainText("Print all 2 Markdown files");
+  });
+
+  test("refuses folders with too many files", async ({ page }) => {
+    await openPage(page);
+    const items = Array.from({ length: 101 }, (_, i) => ({
+      name: `${i}.md`,
+      path: `docs/${i}.md`,
+      contentType: "file",
+    }));
+    await page.route("**/tree/main/docs", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          payload: { codeViewTreeRoute: { path: "docs", refInfo: { name: "main" }, tree: { items } } },
+        }),
+      })
+    );
+    await trigger(page);
+    await expect(panel(page)).toContainText("folder printing is limited to 100");
+    await expect(panel(page).getByRole("button", { name: "Print" })).toBeVisible();
   });
 });
 

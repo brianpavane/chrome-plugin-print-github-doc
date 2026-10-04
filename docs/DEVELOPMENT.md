@@ -33,10 +33,11 @@ modules.
 | Command                     | What it does                                                           |
 | --------------------------- | ---------------------------------------------------------------------- |
 | `npm test`                  | Static checks, then the Playwright tests                               |
-| `npm run check`             | Static checks only (syntax, manifest, version, referenced files)       |
+| `npm run check`             | Static checks (syntax, manifest, version, files, store rules)          |
 | `npm run package`           | Builds `dist/print-github-doc-<version>.zip` (Chrome Web Store format) |
 | `npm run release -- <bump>` | Cuts a release (see [Releasing](#releasing-a-version))                 |
 | `npm run icons`             | Regenerates `icons/` from `scripts/make-icons.mjs`                     |
+| `npm run store-assets`      | Regenerates the store screenshots and promo tiles in `store/`          |
 
 ## Files
 
@@ -44,6 +45,7 @@ modules.
 manifest.json              Extension manifest (Manifest V3)
 VERSION                    Current version; must match manifest.json
 CHANGELOG.md               Release notes
+PRIVACY.md                 Privacy policy (linked from the store listing)
 src/
   background.js            Service worker: button state, right-click menu,
                            injects the CSS + content scripts on use
@@ -64,13 +66,15 @@ scripts/
   package.mjs, zip.mjs     Builds the release zip (no external zip tool needed)
   release.mjs              Version bump + changelog + tests + zip + commit + tag
   make-icons.mjs           Generates icons/
+  store-assets.mjs         Generates store/ images from the live GitHub CLI docs
+store/                     Chrome Web Store screenshots and promo tiles
 test/
   print.spec.js            Playwright tests
   helpers.js               Loads fixtures as github.com, injects scripts, records
                            the page state at the moment window.print() is called
   fixtures/                Fake GitHub pages and JSON responses
 playwright.config.js       Test runner settings (uses installed Chrome)
-docs/                      Install, upgrade, and development guides
+docs/                      Install, upgrade, development, and publishing guides
 ```
 
 ## How it works
@@ -207,11 +211,11 @@ each. Run the list with GitHub in light mode and again in dark mode
 ### Debugging
 
 - Content scripts log to the **GitHub tab's** DevTools console (prefix
-  `Print GitHub Doc:`).
+  `Print Doc for GitHub:`).
 - `background.js` logs to the service worker console: on `chrome://extensions`,
   click **service worker** on the extension's card.
 - Content scripts run in their own JavaScript context. To inspect their state
-  (`GHP`, `GHP_DEFAULTS`), pick **Print GitHub Doc** in the context dropdown at
+  (`GHP`, `GHP_DEFAULTS`), pick **Print Doc for GitHub** in the context dropdown at
   the top of the DevTools console (it says **top** by default) after
   triggering the extension once.
 - To see the print layout without the dialog: in that same context, run
@@ -270,12 +274,42 @@ git push origin main --tags
 Optionally, create a GitHub release from the tag with the changelog section
 as notes, and attach the zip.
 
-## Chrome Web Store (later)
+## Security and store rules
 
-`npm run package` already produces the zip the store expects. Publishing will
-also need a public privacy policy page, store screenshots, and a listing
-description. The repository is private, so links in these docs to GitHub
-only work for people with access.
+The extension runs inside github.com pages, where a mistake could expose a
+user's GitHub session, so:
+
+- **No remote or dynamic code.** Everything that runs is in the package; no
+  `eval`, `new Function`, remote scripts, or string timers. The extension
+  pages' CSP is `script-src 'self'; object-src 'none'; base-uri 'none'`.
+- **Least privilege.** No host permissions or content scripts: the extension
+  touches a tab only after the user acts (`activeTab`), and only on
+  `https://github.com`.
+- **Fetched HTML is sanitized.** Folder printing inserts HTML from GitHub's
+  JSON into the live page. GitHub sanitizes it already, but `bundle.js`
+  also strips scripts, frames, forms, styles, event-handler attributes, and
+  `javascript:`/non-image `data:` URLs before inserting it.
+- **Same-origin only.** `fetchJson` refuses any URL, or redirect, that
+  leaves github.com, and file paths from GitHub's JSON are rejected if they
+  contain `..` or empty segments.
+- **Bounded work.** Folder printing is capped at 100 files, fetched 4 at a
+  time.
+- **The panel is built safely.** Its static markup lives in a shadow root;
+  all text from the page or GitHub is set with `textContent`.
+
+`npm run check` enforces the store-facing parts: manifest field lengths, no
+host permissions or content scripts, a strict CSP, icon sizes, no
+remote-code patterns in `src/`, a name that doesn't start with "GitHub", and
+a justification in [PUBLISHING.md](PUBLISHING.md) for every permission.
+
+## Chrome Web Store
+
+See [PUBLISHING.md](PUBLISHING.md) for the developer account, the listing
+text and review answers, and how to ship updates. The store images in
+`store/` come from `npm run store-assets`, which opens the public
+[GitHub CLI docs](https://github.com/cli/cli/tree/trunk/docs) in Chrome,
+injects the extension's scripts the same way the tests do, and composes the
+1280x800 screenshots and promo tiles. It needs network access.
 
 ## Regenerating icons
 
@@ -284,4 +318,5 @@ npm run icons
 ```
 
 This overwrites `icons/icon16.png`, `icon32.png`, `icon48.png`, and
-`icon128.png`.
+`icon128.png`. The 128 px icon keeps the store's recommended 16 px of
+transparent padding around 96 px of artwork.

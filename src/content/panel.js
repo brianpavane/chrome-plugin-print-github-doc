@@ -59,9 +59,9 @@ GHP.panel = (() => {
 
     shadow.innerHTML = `
       <style>${STYLE}</style>
-      <div class="panel" role="dialog" aria-label="Print GitHub Doc">
+      <div class="panel" role="dialog" aria-label="Print Doc for GitHub">
         <div class="head">
-          <h2>Print GitHub Doc</h2>
+          <h2>Print Doc for GitHub</h2>
           <button class="close" type="button" aria-label="Close">×</button>
         </div>
         <p class="notice" data-ref="notice" hidden>
@@ -115,6 +115,12 @@ GHP.panel = (() => {
       $("folderLoading").hidden = true;
       const n = listing?.files.length || 0;
       // On a file page, a folder holding only that file adds nothing.
+      const max = GHP.github.MAX_FOLDER_FILES;
+      if (n > max) {
+        $("folderLoading").textContent = `This folder has ${n} Markdown files; folder printing is limited to ${max}.`;
+        $("folderLoading").hidden = false;
+        return;
+      }
       folderAvailable = n > 1 || (n === 1 && info.kind !== "blob");
       if (!folderAvailable) {
         $("folderLoading").parentElement.hidden = true;

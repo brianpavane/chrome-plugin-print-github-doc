@@ -9,6 +9,9 @@ GHP.bundle = (() => {
   // <section class="ghp-doc"> per file, in listing order.
   async function build(info, listing, onProgress = () => {}) {
     const { files } = listing;
+    if (files.length > GHP.github.MAX_FOLDER_FILES) {
+      throw new Error(`Too many files (${files.length}); the limit is ${GHP.github.MAX_FOLDER_FILES}.`);
+    }
     const bundle = document.createElement("div");
     bundle.className = "ghp-bundle";
 
@@ -57,8 +60,10 @@ GHP.bundle = (() => {
     return bundle;
   }
 
-  // GitHub's rendered (and sanitized) HTML -> element. Scripts in parsed
-  // HTML never run.
+  // GitHub's rendered HTML -> element. GitHub already sanitizes it, but it
+  // is inserted into the live github.com page, so strip anything active
+  // first: parsing doesn't run scripts, but event handlers on inserted
+  // elements (e.g. <img onerror>) would.
   function parseArticle(html) {
     const doc = new DOMParser().parseFromString(html, "text/html");
     let article = doc.querySelector(".markdown-body");
@@ -67,7 +72,34 @@ GHP.bundle = (() => {
       article.className = "markdown-body";
       article.append(...doc.body.childNodes);
     }
+    sanitize(article);
     return document.importNode(article, true);
+  }
+
+  const BLOCKED_ELEMENTS =
+    "script, style, link, meta, base, iframe, frame, frameset, object, embed, applet, form, template, noscript";
+  const URL_ATTRS = new Set(["href", "src", "xlink:href", "action", "formaction", "poster", "background", "cite"]);
+
+  function sanitize(root) {
+    root.querySelectorAll(BLOCKED_ELEMENTS).forEach((el) => el.remove());
+    for (const el of [root, ...root.querySelectorAll("*")]) {
+      for (const { name, value } of [...el.attributes]) {
+        const n = name.toLowerCase();
+        if (n.startsWith("on") || n === "srcdoc" || (n === "srcset" && /javascript:/i.test(value))) {
+          el.removeAttribute(name);
+        } else if (URL_ATTRS.has(n) && !isSafeUrl(value, el, n)) {
+          el.removeAttribute(name);
+        }
+      }
+      if (el.localName === "input") el.disabled = true; // task-list checkboxes
+    }
+  }
+
+  function isSafeUrl(value, el, attr) {
+    const v = value.replace(/[\u0000-\u0020]/g, "").toLowerCase();
+    if (v.startsWith("javascript:") || v.startsWith("vbscript:")) return false;
+    if (v.startsWith("data:")) return el.localName === "img" && attr === "src" && v.startsWith("data:image/");
+    return true;
   }
 
   async function mapLimit(items, limit, fn) {

@@ -14,7 +14,12 @@ const SCRIPT_FILES = [
 ];
 const MENU_ID = "print-github-doc";
 
-chrome.runtime.onInstalled.addListener(() => {
+// Rules and menu items persist, but re-creating them is idempotent, so this
+// also runs at browser startup in case the button's disabled state was lost.
+chrome.runtime.onInstalled.addListener(setup);
+chrome.runtime.onStartup.addListener(setup);
+
+function setup() {
   // Grey out the button everywhere except GitHub.
   chrome.action.disable();
   chrome.declarativeContent.onPageChanged.removeRules(undefined, () => {
@@ -38,7 +43,7 @@ chrome.runtime.onInstalled.addListener(() => {
       documentUrlPatterns: ["https://github.com/*"],
     });
   });
-});
+}
 
 chrome.action.onClicked.addListener((tab) => run(tab));
 
@@ -55,13 +60,14 @@ async function run(tab) {
     await chrome.scripting.insertCSS({ target, files: [CSS_FILE] });
     await chrome.scripting.executeScript({ target, files: SCRIPT_FILES });
   } catch (err) {
-    console.error("Print GitHub Doc: injection failed", err);
+    console.error("Print Doc for GitHub: injection failed", err);
   }
 }
 
 function isGitHub(url) {
   try {
-    return new URL(url).hostname === "github.com";
+    const u = new URL(url);
+    return u.protocol === "https:" && u.hostname === "github.com";
   } catch {
     return false;
   }
