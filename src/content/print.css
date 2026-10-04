@@ -1,0 +1,135 @@
+/* Print styles, active only while html.ghp-printing is set by print.js.
+   Light colors come from GitHub's own theme (print.js forces light mode);
+   these rules handle what to show and how it paginates. */
+
+.ghp-print-header {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 14mm 12mm;
+  }
+
+  html.ghp-printing,
+  html.ghp-printing body {
+    background: #fff !important;
+    color-scheme: light !important;
+  }
+
+  /* Hide everything that isn't the document or one of its ancestors. */
+  html.ghp-printing body *:not([data-ghp-path]):not([data-ghp-root]):not([data-ghp-root] *) {
+    display: none !important;
+  }
+
+  /* Flatten the ancestors so the document uses the full page width. */
+  html.ghp-printing [data-ghp-path] {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  html.ghp-printing [data-ghp-root] {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    max-width: none !important;
+    background: #fff !important;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Header: title, repository, file, URL. */
+  html.ghp-printing .ghp-print-header {
+    display: block !important;
+    margin: 0 0 16px !important;
+    padding: 0 0 8px !important;
+    border-bottom: 1px solid #d0d7de;
+    font-size: 9pt;
+    line-height: 1.4;
+    color: #59636e;
+  }
+
+  html.ghp-printing .ghp-print-title {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #1f2328;
+    margin-bottom: 2px;
+  }
+
+  html.ghp-printing .ghp-print-meta {
+    word-break: break-all;
+  }
+
+  html.ghp-printing .ghp-print-label {
+    font-weight: 600;
+  }
+
+  /* Interactive chrome inside the markdown body. */
+  html.ghp-printing [data-ghp-root] .zeroclipboard-container,
+  html.ghp-printing [data-ghp-root] clipboard-copy,
+  html.ghp-printing [data-ghp-root] a.anchor .octicon {
+    display: none !important;
+  }
+
+  /* Code: wrap instead of clipping. */
+  html.ghp-printing [data-ghp-root] pre,
+  html.ghp-printing [data-ghp-root] pre code {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* Tables: real table layout so they don't get a scroll box. */
+  html.ghp-printing [data-ghp-root] table {
+    display: table !important;
+    width: auto !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Pagination. */
+  html.ghp-printing [data-ghp-root] :is(h1, h2, h3, h4, h5, h6) {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+
+  html.ghp-printing [data-ghp-root] :is(img, svg, figure, tr, blockquote, pre, .highlight) {
+    break-inside: avoid;
+  }
+
+  html.ghp-printing [data-ghp-root] img {
+    max-width: 100% !important;
+  }
+
+  /* Diagram iframes: give them their rendered height and keep them whole. */
+  html.ghp-printing [data-ghp-root] iframe {
+    break-inside: avoid;
+    max-width: 100% !important;
+  }
+
+  html.ghp-printing .ghp-invert {
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  /* Link URLs (only on links print.js marked; controlled by options). */
+  html.ghp-printing [data-ghp-href]::after {
+    content: " (" attr(data-ghp-href) ")";
+    font-size: 0.85em;
+    color: #59636e;
+    word-break: break-all;
+  }
+}
